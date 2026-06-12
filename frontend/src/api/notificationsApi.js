@@ -10,6 +10,11 @@ export const notificationsApi = {
     const res = await client.put(`/notifications/${id}/read`);
     return res.data;
   },
+
+  markAllRead: async () => {
+    const res = await client.put('/notifications/read-all');
+    return res.data;
+  },
 };
 
 export default notificationsApi;

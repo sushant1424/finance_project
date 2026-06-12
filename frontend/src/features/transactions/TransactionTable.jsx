@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import TransactionTableUI from '@/components/transactions/TransactionTable';
@@ -42,18 +43,52 @@ export default function TransactionTable() {
     }
   };
 
-  const handleExport = async () => {
-    const ok = await confirm({ title: 'Export CSV?', description: 'Download all filtered transactions.', confirmLabel: 'Export' });
+  const handleDuplicate = async (tx) => {
+    const ok = await confirm({
+      title: 'Duplicate transaction?',
+      description: `Create a copy of "${tx.description}" with today's date?`,
+      confirmLabel: 'Duplicate',
+    });
+    if (!ok) return;
+    const data = {
+      description: tx.description,
+      amount: tx.amount,
+      category: tx.category,
+      type: tx.type,
+      date: new Date().toISOString().split('T')[0],
+    };
+    const r = await create(data);
+    if (r?.meta?.requestStatus === 'fulfilled') {
+      if (r.payload?.is_anomaly) {
+        toast('⚠️ Unusual expense detected!', { style: { background: '#422006', color: '#fef3c7', border: '1px solid #f59e0b' } });
+      } else {
+        toast.success('Transaction duplicated');
+      }
+      fetch();
+    }
+  };
+
+  const handleExport = async (format) => {
+    const ok = await confirm({ title: `Export ${format.toUpperCase()}?`, description: 'Download all filtered transactions.', confirmLabel: 'Export' });
     if (!ok) return;
     try {
       const blob = await exportCsv();
-      const url = URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'transactions.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success('Export downloaded');
+      const text = await new Response(blob).text();
+      if (format === 'xlsx') {
+        const rows = text.trim().split('\n').map((r) => r.split(','));
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+        XLSX.writeFile(wb, 'transactions.xlsx');
+      } else {
+        const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'transactions.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      toast.success(`${format.toUpperCase()} exported`);
     } catch {
       toast.error('Export failed');
     }
@@ -66,7 +101,10 @@ export default function TransactionTable() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted">{total} results</p>
-        <Button variant="outline" size="sm" onClick={handleExport}>Export CSV</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => handleExport('csv')}>Export CSV</Button>
+          <Button variant="outline" size="sm" onClick={() => handleExport('xlsx')}>Export Excel</Button>
+        </div>
       </div>
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-surface-1 px-4 py-2">
@@ -83,7 +121,9 @@ export default function TransactionTable() {
         onSelectAll={() => (selectedIds.length === items.length ? clearSelection() : selectAll())}
         onEdit={setEditTx}
         onDelete={handleDelete}
+        onDuplicate={handleDuplicate}
         showSelection
+        searchQuery={filters.search || ''}
       />
       <div className="flex items-center justify-between text-sm text-muted">
         <span>{total ? `Showing ${start}–${end} of ${total}` : 'No results'}</span>

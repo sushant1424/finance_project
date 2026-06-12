@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import EmptyState from '@/components/common/EmptyState';
@@ -8,10 +8,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/formatDate';
 import { getCategoryById } from '@/constants/categories';
 import { ROUTES } from '@/constants/routes';
+import { ArrowLeftRight } from 'lucide-react';
 
 export default function RecentTransactions() {
   const { dashboard } = useAnalytics(true);
   const { currency, showCents, user } = useAuth();
+  const navigate = useNavigate();
   const items = dashboard?.recent_transactions ?? [];
 
   return (
@@ -22,7 +24,13 @@ export default function RecentTransactions() {
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <EmptyState title="No transactions yet" description="Add your first transaction to get started." />
+          <EmptyState
+            icon={ArrowLeftRight}
+            title="No transactions yet"
+            description="Add your first transaction to start tracking your finances."
+            actionLabel="Add transaction"
+            onAction={() => navigate(ROUTES.TRANSACTIONS)}
+          />
         ) : (
           <ul className="divide-y divide-border">
             {items.slice(0, 8).map((tx) => (

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import TrendBadge from '@/components/common/TrendBadge';
 
@@ -10,14 +11,10 @@ export default function StatCard({
   valueClassName,
   className,
   children,
+  to,
 }) {
-  return (
-    <div
-      className={cn(
-        'rounded-xl border border-border bg-surface-1 p-6',
-        className,
-      )}
-    >
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-muted">{title}</p>
@@ -37,6 +34,18 @@ export default function StatCard({
         )}
       </div>
       {children && <div className="mt-4">{children}</div>}
-    </div>
+    </>
   );
+
+  const cardClass = cn(
+    'rounded-xl border border-border bg-surface-1 p-6',
+    to && 'transition-colors hover:border-primary/30 hover:bg-surface-2/50',
+    className,
+  );
+
+  if (to) {
+    return <Link to={to} className={cardClass}>{content}</Link>;
+  }
+
+  return <div className={cardClass}>{content}</div>;
 }

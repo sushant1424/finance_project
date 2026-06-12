@@ -11,6 +11,7 @@ export const ROUTES = {
   INSIGHTS: '/insights',
   ANOMALIES: '/anomalies',
   NET_WORTH: '/networth',
+  RECURRING: '/recurring',
   PROFILE: '/profile',
   SETTINGS: '/settings',
 };
@@ -26,6 +27,7 @@ export const PROTECTED_ROUTES = [
   ROUTES.REPORTS,
   ROUTES.ANOMALIES,
   ROUTES.NET_WORTH,
+  ROUTES.RECURRING,
   ROUTES.PROFILE,
   ROUTES.SETTINGS,
 ];
@@ -40,6 +42,7 @@ export const NAV_ITEMS = {
     { path: ROUTES.TRANSACTIONS, label: 'Transactions', icon: 'ArrowLeftRight' },
     { path: ROUTES.BUDGETS, label: 'Budgets', icon: 'PiggyBank' },
     { path: ROUTES.GOALS, label: 'Goals', icon: 'Target' },
+    { path: ROUTES.RECURRING, label: 'Recurring', icon: 'RefreshCw' },
   ],
   insights: [
     { path: ROUTES.INSIGHTS, label: 'Insights', icon: 'Lightbulb' },

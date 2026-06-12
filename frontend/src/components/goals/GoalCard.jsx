@@ -17,7 +17,14 @@ export default function GoalCard({ goal, onEdit, onDelete, onContribute, classNa
         <div className="flex items-center gap-2">
           <span className="text-2xl" aria-hidden>{goal.icon ?? '🎯'}</span>
           <div>
-            <CardTitle className="text-base">{goal.name}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base">{goal.name}</CardTitle>
+              {current >= target && (
+                <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
+                  🎉 Completed
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted">Target: {formatDate(goal.target_date)}</p>
           </div>
         </div>

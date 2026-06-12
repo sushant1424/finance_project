@@ -5,6 +5,7 @@ import budgetReducer from '@/store/budgetSlice';
 import goalReducer from '@/store/goalSlice';
 import analyticsReducer from '@/store/analyticsSlice';
 import uiReducer from '@/store/uiSlice';
+import notificationReducer from '@/store/notificationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     goals: goalReducer,
     analytics: analyticsReducer,
     ui: uiReducer,
+    notifications: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

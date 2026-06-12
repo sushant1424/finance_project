@@ -1,13 +1,12 @@
 import calendar
 from datetime import date
 
-from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
 
 from app.models.goal import Goal
 from app.models.transaction import Transaction
 from app.services.budget_service import get_budgets
-from app.services.pace_service import compute_budget_pace
+from app.services.notification_read_service import _get_dismissed_ids, filter_dismissed
 
 
 def _anomaly_notifications(user_id, db: Session) -> list:
@@ -46,28 +45,66 @@ def _budget_notifications(user_id, month: int, year: int, db: Session) -> list:
     items = []
 
     for b in get_budgets(user_id, month, year, db):
-        pace = b["pace"]
-        if pace["status"] not in ("at_risk", "will_exceed", "exceeded"):
-            continue
+        pct = b["utilization_pct"]
         cat = b["category"].replace("_", " ").title()
-        if pace["status"] == "exceeded":
-            msg = f"{cat} budget already exceeded (NPR {b['spent']:,.0f} of {b['monthly_limit']:,.0f})"
-        elif pace["status"] == "will_exceed":
-            days = pace.get("days_until_exceeded")
-            msg = f"{cat} on track to exceed limit" + (f" in ~{int(days)} days" if days else "")
-        else:
-            msg = f"{cat} at {b['utilization_pct']}% — spending faster than planned"
-        items.append({
-            "id": f"budget-{b['id']}",
-            "type": "budget",
-            "severity": "high" if pace["status"] == "exceeded" else "medium",
-            "title": "Budget warning",
-            "message": msg,
-            "date": today.isoformat(),
-            "read": False,
-            "action_path": "/budgets",
-            "entity_id": b["id"],
-        })
+        pace = b["pace"]
+
+        # Threshold alerts (50 / 75 / 90 %)
+        if pct >= 90:
+            items.append({
+                "id": f"budget-thresh-90-{b['id']}",
+                "type": "budget",
+                "severity": "high",
+                "title": "Budget almost exhausted",
+                "message": f"{cat} at {pct}% — only NPR {b['remaining']:,.0f} left",
+                "date": today.isoformat(),
+                "read": False,
+                "action_path": "/budgets",
+                "entity_id": b["id"],
+            })
+        elif pct >= 75:
+            items.append({
+                "id": f"budget-thresh-75-{b['id']}",
+                "type": "budget",
+                "severity": "medium",
+                "title": "Budget 75% used",
+                "message": f"{cat} at {pct}% — NPR {b['remaining']:,.0f} remaining this month",
+                "date": today.isoformat(),
+                "read": False,
+                "action_path": "/budgets",
+                "entity_id": b["id"],
+            })
+        elif pct >= 50:
+            items.append({
+                "id": f"budget-thresh-50-{b['id']}",
+                "type": "budget",
+                "severity": "low",
+                "title": "Budget halfway",
+                "message": f"{cat} at {pct}% — NPR {b['remaining']:,.0f} remaining this month",
+                "date": today.isoformat(),
+                "read": False,
+                "action_path": "/budgets",
+                "entity_id": b["id"],
+            })
+
+        # Existing pace alerts (exceeded / will_exceed)
+        if pace["status"] in ("will_exceed", "exceeded"):
+            if pace["status"] == "exceeded":
+                msg = f"{cat} budget already exceeded (NPR {b['spent']:,.0f} of {b['monthly_limit']:,.0f})"
+            else:
+                days = pace.get("days_until_exceeded")
+                msg = f"{cat} on track to exceed limit" + (f" in ~{int(days)} days" if days else "")
+            items.append({
+                "id": f"budget-{b['id']}",
+                "type": "budget",
+                "severity": "high" if pace["status"] == "exceeded" else "medium",
+                "title": "Budget warning",
+                "message": msg,
+                "date": today.isoformat(),
+                "read": False,
+                "action_path": "/budgets",
+                "entity_id": b["id"],
+            })
     return items
 
 
@@ -100,13 +137,22 @@ def _goal_notifications(user_id, db: Session) -> list:
     return items
 
 
-def get_notifications(user_id, db: Session) -> dict:
+def get_notifications(user_id, db: Session, include_dismissed: bool = False) -> dict:
     today = date.today()
+    dismissed = _get_dismissed_ids(user_id, db)
     items = (
         _anomaly_notifications(user_id, db)
         + _budget_notifications(user_id, today.month, today.year, db)
         + _goal_notifications(user_id, db)
     )
+
+    if not include_dismissed:
+        items = filter_dismissed(items, dismissed)
+    else:
+        for n in items:
+            if n["id"] in dismissed:
+                n["read"] = True
+
     severity_order = {"high": 0, "medium": 1, "low": 2}
     items.sort(key=lambda n: (severity_order.get(n["severity"], 3), n["date"]), reverse=True)
     unread = sum(1 for n in items if not n["read"])

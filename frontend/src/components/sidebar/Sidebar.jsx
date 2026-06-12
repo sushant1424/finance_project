@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   LineChart, LayoutDashboard, Bell, TrendingUp, ArrowLeftRight, PiggyBank,
   Target, BarChart3, Lightbulb, AlertTriangle, User, Settings, PanelLeftClose, PanelLeft,
+  RefreshCw,
 } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,6 +19,7 @@ import { cn } from '@/lib/utils';
 const ICONS = {
   LayoutDashboard, TrendingUp, ArrowLeftRight, PiggyBank,
   Target, BarChart3, Lightbulb, AlertTriangle, User, Settings, Bell,
+  RefreshCw,
 };
 
 const SECTIONS = [
@@ -76,18 +78,27 @@ export default function Sidebar() {
             <ThemeToggle size="icon" className="h-8 w-8" />
           </div>
         )}
-        <Button
-          variant="ghost"
-          size={expanded ? 'sm' : 'icon'}
-          onClick={toggle}
-          className={cn('w-full text-muted hover:text-foreground', !expanded && 'h-8 w-8')}
-        >
-          {expanded ? (
+        {expanded ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggle}
+            className="w-full text-muted hover:text-foreground"
+          >
             <span className="flex items-center gap-2"><PanelLeftClose className="h-4 w-4" /> Collapse</span>
-          ) : (
-            <PanelLeft className="h-4 w-4" />
-          )}
-        </Button>
+          </Button>
+        ) : (
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggle}
+              className="h-8 w-8 text-muted hover:text-foreground"
+            >
+              <PanelLeft className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <SidebarUserFooter expanded={expanded} />

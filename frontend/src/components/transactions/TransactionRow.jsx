@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -15,9 +15,21 @@ export default function TransactionRow({
   onToggleSelect,
   onEdit,
   onDelete,
+  onDuplicate,
   showActions = true,
+  searchQuery = '',
 }) {
   const category = getCategoryById(transaction.category);
+
+  // Simple highlight function
+  const renderHighlightedText = (text, search) => {
+    if (!search.trim()) return text;
+    const regex = new RegExp(`(${search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, i) => 
+      regex.test(part) ? <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-100 rounded-sm px-0.5">{part}</mark> : part
+    );
+  };
 
   return (
     <TableRow data-state={selected ? 'selected' : undefined}>
@@ -31,7 +43,7 @@ export default function TransactionRow({
         <div className="flex items-center gap-3">
           <CategoryIcon categoryId={transaction.category} size="sm" />
           <div className="min-w-0">
-            <p className="truncate font-medium">{transaction.description}</p>
+            <p className="truncate font-medium">{renderHighlightedText(transaction.description, searchQuery)}</p>
             <p className="text-xs text-muted">{category?.label ?? transaction.category}</p>
           </div>
         </div>
@@ -44,8 +56,13 @@ export default function TransactionRow({
         />
       </TableCell>
       {showActions && (
-        <TableCell className="w-24 text-right">
+        <TableCell className="w-32 text-right">
           <div className="flex justify-end gap-1">
+            {onDuplicate && (
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted hover:text-foreground" onClick={() => onDuplicate(transaction)} title="Duplicate Transaction">
+                <Copy className="h-4 w-4" />
+              </Button>
+            )}
             {onEdit && (
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(transaction)}>
                 <Pencil className="h-4 w-4" />

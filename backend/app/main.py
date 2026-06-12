@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import analytics, anomalies, auth, budgets, goals, networth, notifications, transactions
 from app.core.database import Base, engine
+from app.models.dismissed_notification import DismissedNotification  # noqa: F401
 
 Base.metadata.create_all(bind=engine)
 

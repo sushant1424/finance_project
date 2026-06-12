@@ -13,8 +13,10 @@ export default function TransactionTable({
   onSelectAll,
   onEdit,
   onDelete,
+  onDuplicate,
   showSelection = false,
   className,
+  searchQuery = '',
 }) {
   if (loading) return <SkeletonTable rows={8} columns={showSelection ? 6 : 5} className={className} />;
 
@@ -45,7 +47,7 @@ export default function TransactionTable({
             <TableHead>Description</TableHead>
             <TableHead>Type</TableHead>
             <TableHead className="text-right">Amount</TableHead>
-            {(onEdit || onDelete) && <TableHead className="w-24 text-right">Actions</TableHead>}
+            {(onEdit || onDelete || onDuplicate) && <TableHead className="w-32 text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -57,7 +59,9 @@ export default function TransactionTable({
               onToggleSelect={showSelection ? onToggleSelect : undefined}
               onEdit={onEdit}
               onDelete={onDelete}
-              showActions={Boolean(onEdit || onDelete)}
+              onDuplicate={onDuplicate}
+              showActions={Boolean(onEdit || onDelete || onDuplicate)}
+              searchQuery={searchQuery}
             />
           ))}
         </TableBody>

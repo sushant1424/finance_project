@@ -17,6 +17,7 @@ import InsightsPage from '@/pages/InsightsPage';
 import ReportsPage from '@/pages/ReportsPage';
 import AnomaliesPage from '@/pages/AnomaliesPage';
 import NetWorthPage from '@/pages/NetWorthPage';
+import RecurringPage from '@/pages/RecurringPage';
 import ProfilePage from '@/pages/ProfilePage';
 import SettingsPage from '@/pages/SettingsPage';
 
@@ -75,6 +76,7 @@ export default function App() {
           <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
           <Route path={ROUTES.ANOMALIES} element={<AnomaliesPage />} />
           <Route path={ROUTES.NET_WORTH} element={<NetWorthPage />} />
+          <Route path={ROUTES.RECURRING} element={<RecurringPage />} />
           <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
           <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
         </Route>

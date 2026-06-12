@@ -41,6 +41,11 @@ export const analyticsApi = {
     const res = await client.get('/analytics/insights');
     return res.data;
   },
+
+  digest: async () => {
+    const res = await client.get('/analytics/digest');
+    return res.data;
+  },
 };
 
 export default analyticsApi;

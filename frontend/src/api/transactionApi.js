@@ -33,6 +33,11 @@ export const transactionApi = {
     });
     return res.data;
   },
+
+  recurring: async () => {
+    const res = await client.get('/transactions/recurring');
+    return res.data;
+  },
 };
 
 export default transactionApi;

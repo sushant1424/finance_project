@@ -12,11 +12,13 @@ function pctChange(current, previous) {
 export default function MonthOverview() {
   const { dashboard } = useAnalytics(true);
   const d = dashboard ?? {};
-  if (!d.total_income && !d.total_expenses) return null;
 
   const incomeChg = pctChange(d.total_income, d.prev_income);
   const expenseChg = pctChange(d.total_expenses, d.prev_expenses);
   const topCat = d.top_category ? getCategoryById(d.top_category)?.label ?? d.top_category : null;
+  const hasData = d.total_income || d.total_expenses || d.prev_income || d.prev_expenses;
+
+  if (!hasData) return null;
 
   return (
     <Card>

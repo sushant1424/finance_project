@@ -25,6 +25,11 @@ export const budgetApi = {
     const res = await client.delete(`/budgets/${id}`);
     return res.data;
   },
+
+  suggestions: async (month, year) => {
+    const res = await client.get('/budgets/suggestions', { params: { month, year } });
+    return res.data;
+  },
 };
 
 export default budgetApi;
