@@ -21,4 +21,6 @@ class User(Base):
     show_cents = Column(Boolean, default=True)
     chart_animation = Column(Boolean, default=True)
     first_day_of_week = Column(String, default="Sunday")
+    reset_token = Column(String, nullable=True)
+    reset_token_expires = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

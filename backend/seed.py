@@ -11,8 +11,6 @@ from app.models.transaction import Transaction
 from app.models.budget import Budget
 from app.models.goal import Goal
 from app.models.goal_contribution import GoalContribution
-from app.models.networth_snapshot import NetWorthSnapshot
-from app.services.anomaly_service import compute_z_score
 
 EMAIL = "test@gmail.com"
 PASSWORD = "Test123456"
@@ -62,7 +60,6 @@ def seed():
             db.query(Transaction).filter(Transaction.user_id == user.id).delete()
             db.query(Budget).filter(Budget.user_id == user.id).delete()
             db.query(Goal).filter(Goal.user_id == user.id).delete()
-            db.query(NetWorthSnapshot).filter(NetWorthSnapshot.user_id == user.id).delete()
             user.password_hash = get_password_hash(PASSWORD)
             user.name = NAME
         else:
@@ -104,15 +101,6 @@ def seed():
 
         db.flush()
 
-        expenses = db.query(Transaction).filter(
-            Transaction.user_id == user.id, Transaction.type == "expense"
-        ).all()
-        for t in expenses:
-            z, severity, is_anomaly = compute_z_score(float(t.amount), t.category, user.id, db, exclude_id=t.id)
-            t.z_score = z
-            t.anomaly_severity = severity
-            t.is_anomaly = is_anomaly
-
         # Budgets for current + 2 prior months
         for offset in range(3):
             m, y = _month_offset(today, offset)
@@ -138,32 +126,12 @@ def seed():
                     note=f"Monthly save #{j + 1}", date=today - timedelta(days=30 * j),
                 ))
 
-        assets = {"cash": 125000, "investments": 380000, "property": 5200000, "vehicle": 850000, "other": 50000}
-        liabilities = {"loans": 1150000, "credit_card": 38000, "other_debts": 15000}
-        for m in range(12):
-            snap_m, snap_y = _month_offset(today, m)
-            snap_date = date(snap_y, snap_m, 1)
-            growth = 1 + (0.015 * (12 - m))
-            debt_factor = 1 - (m * 0.008)
-            ta = int(sum(assets.values()) * growth)
-            tl = int(sum(liabilities.values()) * debt_factor)
-            db.add(NetWorthSnapshot(
-                user_id=user.id,
-                total_assets=Decimal(str(ta)),
-                total_liabilities=Decimal(str(tl)),
-                net_worth=Decimal(str(ta - tl)),
-                snapshot_date=snap_date,
-                assets_breakdown={k: int(v * growth) for k, v in assets.items()},
-                liabilities_breakdown={k: int(v * debt_factor) for k, v in liabilities.items()},
-            ))
-
         db.commit()
         tx_count = db.query(Transaction).filter(Transaction.user_id == user.id).count()
         print(f"Seeded user: {EMAIL} / {PASSWORD}")
         print(f"Transactions: {tx_count}")
         print(f"Budgets: {db.query(Budget).filter(Budget.user_id == user.id).count()}")
         print(f"Goals: {db.query(Goal).filter(Goal.user_id == user.id).count()}")
-        print(f"Net worth snapshots: {db.query(NetWorthSnapshot).filter(NetWorthSnapshot.user_id == user.id).count()}")
     finally:
         db.close()
 

@@ -18,4 +18,6 @@ class Goal(Base):
     target_date = Column(Date, nullable=False)
     icon = Column(String, default="🎯")
     color = Column(String, default="#06b6d4")
+    status = Column(String, default="active")  # active | completed | withdrawn
+    completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

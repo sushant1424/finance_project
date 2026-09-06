@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Numeric, String, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
@@ -18,8 +18,8 @@ class Transaction(Base):
     category = Column(String, nullable=False)
     date = Column(Date, nullable=False)
     notes = Column(Text)
-    is_anomaly = Column(Boolean, default=False)
-    z_score = Column(Float)
-    anomaly_severity = Column(String)
-    anomaly_reviewed = Column(Boolean, default=False)
+    is_recurring = Column(Boolean, default=False)
+    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
+    to_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

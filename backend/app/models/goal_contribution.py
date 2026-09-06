@@ -15,4 +15,6 @@ class GoalContribution(Base):
     amount = Column(Numeric(12, 2), nullable=False)
     note = Column(String)
     date = Column(Date, nullable=False)
+    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
+    transaction_id = Column(UUID(as_uuid=True), ForeignKey("transactions.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -6,9 +6,11 @@ from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
+    ForgotPasswordRequest,
     LoginRequest,
     ProfileUpdateRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserResponse,
 )
@@ -75,3 +77,15 @@ def change_password(
 def delete_account(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     auth_service.delete_account(user, db)
     return {"message": "Account deleted"}
+
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    auth_service.request_password_reset(data.email, db)
+    return {"message": "If that email exists, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    auth_service.reset_password(data.token, data.new_password, db)
+    return {"message": "Password updated successfully"}

@@ -1,20 +1,26 @@
-from collections import defaultdict
 from datetime import date
 from uuid import UUID
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import PlainTextResponse
-from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.transaction import Transaction
 from app.models.user import User
-from app.schemas.transaction import BulkDeleteRequest, TransactionCreate, TransactionUpdate
+from app.schemas.transaction import (
+    BulkDeleteRequest,
+    CategorySuggestRequest,
+    TransactionCreate,
+    TransactionUpdate,
+)
 from app.services import transaction_service
+from app.services.categorizer_service import suggest_category_nb
+from app.services.import_service import import_transactions_csv
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import PlainTextResponse
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
+# Thin route layer — business logic lives in services/
 
 @router.get("")
 def list_transactions(
@@ -27,15 +33,27 @@ def list_transactions(
     amount_min: float | None = None,
     amount_max: float | None = None,
     search: str | None = None,
+    trash: bool = False,
+    account_id: str | None = None,
     sort_by: str = "date",
     sort_order: str = "desc",
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     params = {
-        "page": page, "limit": limit, "type": type, "category": category,
-        "date_from": date_from, "date_to": date_to, "amount_min": amount_min,
-        "amount_max": amount_max, "search": search, "sort_by": sort_by, "sort_order": sort_order,
+        "page": page,
+        "limit": limit,
+        "type": type,
+        "category": category,
+        "date_from": date_from,
+        "date_to": date_to,
+        "amount_min": amount_min,
+        "amount_max": amount_max,
+        "search": search,
+        "trash": trash,
+        "account_id": account_id,
+        "sort_by": sort_by,
+        "sort_order": sort_order,
     }
     return transaction_service.get_transactions(user.id, db, params)
 
@@ -59,9 +77,29 @@ def export_transactions(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    params = {"type": type, "category": category, "date_from": date_from, "date_to": date_to, "search": search}
-    csv = transaction_service.export_csv(user.id, db, params)
-    return PlainTextResponse(csv, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=transactions.csv"})
+    params = {
+        "type": type,
+        "category": category,
+        "date_from": date_from,
+        "date_to": date_to,
+        "search": search,
+    }
+    csv_data = transaction_service.export_csv(user.id, db, params)
+    return PlainTextResponse(
+        csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=transactions.csv"},
+    )
+
+
+@router.post("/import")
+async def import_csv(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    content = await file.read()
+    return import_transactions_csv(user.id, content, db)
 
 
 @router.get("/recurring")
@@ -69,35 +107,9 @@ def recurring_transactions(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Detect recurring transactions by grouping expenses with the same description across 2+ months."""
-    txs = (
-        db.query(Transaction)
-        .filter(Transaction.user_id == user.id, Transaction.type == "expense")
-        .order_by(Transaction.date.desc())
-        .all()
-    )
-    groups = defaultdict(list)
-    for t in txs:
-        groups[t.description.lower().strip()].append(t)
-
-    result = []
-    for desc, items in groups.items():
-        months = {(t.date.year, t.date.month) for t in items}
-        if len(months) < 2:
-            continue
-        amounts = [float(t.amount) for t in items]
-        latest = max(items, key=lambda t: t.date)
-        result.append({
-            "description": latest.description,
-            "category": latest.category,
-            "avg_amount": round(sum(amounts) / len(amounts), 2),
-            "count": len(items),
-            "months_seen": len(months),
-            "last_date": latest.date.isoformat(),
-        })
-
-    result.sort(key=lambda x: x["avg_amount"], reverse=True)
-    return result
+    """Legacy endpoint — returns saved recurring bills."""
+    from app.services import recurring_bill_service
+    return recurring_bill_service.list_bills(user.id, db, page=1, limit=100)["items"]
 
 
 @router.delete("/bulk")
@@ -117,7 +129,11 @@ def update_transaction(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    t = db.query(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == user.id).first()
+    t = (
+        db.query(Transaction)
+        .filter(Transaction.id == transaction_id, Transaction.user_id == user.id)
+        .first()
+    )
     if not t:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return transaction_service.update_transaction(t, data, db)
@@ -129,8 +145,40 @@ def delete_transaction(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    t = db.query(Transaction).filter(Transaction.id == transaction_id, Transaction.user_id == user.id).first()
+    t = (
+        db.query(Transaction)
+        .filter(Transaction.id == transaction_id, Transaction.user_id == user.id, Transaction.deleted_at.is_(None))
+        .first()
+    )
     if not t:
         raise HTTPException(status_code=404, detail="Transaction not found")
     transaction_service.delete_transaction(t, db)
-    return {"message": "Deleted"}
+    return {"message": "Deleted", "id": str(t.id)}
+
+
+@router.post("/{transaction_id}/restore")
+def restore_transaction(
+    transaction_id: UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    t = (
+        db.query(Transaction)
+        .filter(Transaction.id == transaction_id, Transaction.user_id == user.id, Transaction.deleted_at.isnot(None))
+        .first()
+    )
+    if not t:
+        raise HTTPException(status_code=404, detail="Transaction not found in trash")
+    return transaction_service.restore_transaction(t, db)
+
+
+@router.post("/suggest-category")
+def suggest_category(
+    data: CategorySuggestRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    result = suggest_category_nb(user.id, data.description, db, tx_type=data.type)
+    if not result:
+        return {"category": None, "confidence": 0, "is_starter": True}
+    return result

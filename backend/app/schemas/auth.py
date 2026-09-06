@@ -35,11 +35,11 @@ class UserResponse(BaseModel):
 
 
 class ProfileUpdateRequest(BaseModel):
-    name: str | None = None
+    name: str | None = Field(None, min_length=2, max_length=100)
     email: EmailStr | None = None
-    currency: str | None = None
+    currency: str | None = Field(None, min_length=1, max_length=10)
     date_format: str | None = None
-    month_start_day: int | None = None
+    month_start_day: int | None = Field(None, ge=1, le=28)
     compact_mode: bool | None = None
     show_cents: bool | None = None
     chart_animation: bool | None = None
@@ -48,4 +48,13 @@ class ProfileUpdateRequest(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
+    new_password: str = Field(min_length=8)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
     new_password: str = Field(min_length=8)

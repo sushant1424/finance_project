@@ -1,9 +1,6 @@
-from uuid import UUID
-
 from sqlalchemy.orm import Session
 
 from app.models.dismissed_notification import DismissedNotification
-from app.models.transaction import Transaction
 
 
 def _get_dismissed_ids(user_id, db: Session) -> set[str]:
@@ -34,14 +31,7 @@ def _dismiss(user_id, notification_id: str, db: Session) -> None:
 
 
 def mark_read(user_id, notification_id: str, db: Session) -> None:
-    if notification_id.startswith("anomaly-"):
-        tx_id = notification_id.replace("anomaly-", "")
-        t = db.query(Transaction).filter(Transaction.id == UUID(tx_id), Transaction.user_id == user_id).first()
-        if t:
-            t.anomaly_reviewed = True
-            db.commit()
-    else:
-        _dismiss(user_id, notification_id, db)
+    _dismiss(user_id, notification_id, db)
 
 
 def mark_all_read(user_id, db: Session) -> None:

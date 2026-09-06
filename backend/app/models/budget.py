@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.core.database import Base
@@ -19,4 +19,5 @@ class Budget(Base):
     monthly_limit = Column(Numeric(12, 2), nullable=False)
     month = Column(Integer, nullable=False)
     year = Column(Integer, nullable=False)
+    rollover = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
