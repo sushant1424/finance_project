@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import authApi from '@/api/authApi';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
+import { getApiErrorMessage } from '@/utils/apiError';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +21,7 @@ export default function DangerZone() {
       toast.success('Account deleted');
       navigate(ROUTES.LANDING);
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to delete account');
+      toast.error(getApiErrorMessage(err, 'Failed to delete account'));
     }
   };
 

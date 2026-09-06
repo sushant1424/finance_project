@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const storedTheme = localStorage.getItem('finsight_theme') || 'dark';
+const storedTheme = localStorage.getItem('finsight_theme') || 'light';
 
 const uiSlice = createSlice({
   name: 'ui',

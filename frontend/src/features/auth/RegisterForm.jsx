@@ -1,10 +1,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { registerSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
+import { toastAsyncResult } from '@/utils/toastAsyncResult';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,8 +20,7 @@ export default function RegisterForm() {
   const onSubmit = async (data) => {
     const { confirmPassword, ...payload } = data;
     const result = await registerUser(payload);
-    if (result?.meta?.requestStatus === 'fulfilled') {
-      toast.success('Account created! Welcome to FinSight 🎉');
+    if (toastAsyncResult(result, { success: 'Account created! Welcome to FinSight.' })) {
       navigate(ROUTES.DASHBOARD, { replace: true });
     }
   };

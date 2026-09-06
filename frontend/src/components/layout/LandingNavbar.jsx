@@ -9,10 +9,10 @@ export default function LandingNavbar() {
   const { isAuthenticated, initialized } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95">
+    <header className="sticky top-0 z-50 border-b border-border bg-surface-1/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link to={ROUTES.LANDING} className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/15 text-primary">
             <LineChart className="h-4 w-4" />
           </div>
           <span className="text-base font-semibold text-foreground">FinSight</span>

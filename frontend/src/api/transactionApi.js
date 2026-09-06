@@ -21,6 +21,11 @@ export const transactionApi = {
     return res.data;
   },
 
+  restore: async (id) => {
+    const res = await client.post(`/transactions/${id}/restore`);
+    return res.data;
+  },
+
   bulkDelete: async (ids) => {
     const res = await client.delete('/transactions/bulk', { data: { ids } });
     return res.data;
@@ -36,6 +41,11 @@ export const transactionApi = {
 
   recurring: async () => {
     const res = await client.get('/transactions/recurring');
+    return res.data;
+  },
+
+  suggestCategory: async (description, type = 'expense') => {
+    const res = await client.post('/transactions/suggest-category', { description, type });
     return res.data;
   },
 };

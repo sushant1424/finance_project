@@ -18,13 +18,30 @@ export default function TransactionRow({
   onDuplicate,
   showActions = true,
   searchQuery = '',
+  relativeAccountId,
 }) {
   const category = getCategoryById(transaction.category);
+
+  const displayAmount =
+    relativeAccountId && transaction.type === 'transfer'
+      ? transaction.account_id === relativeAccountId
+        ? -transaction.amount
+        : transaction.amount
+      : transaction.amount;
+
+  const amountClass =
+    transaction.type === 'income' || (transaction.type === 'transfer' && displayAmount > 0)
+      ? 'text-success'
+      : transaction.type === 'expense' || (transaction.type === 'transfer' && displayAmount < 0)
+        ? 'text-danger'
+        : transaction.type === 'transfer'
+          ? 'text-muted'
+          : undefined;
 
   // Simple highlight function
   const renderHighlightedText = (text, search) => {
     if (!search.trim()) return text;
-    const regex = new RegExp(`(${search.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
     const parts = text.split(regex);
     return parts.map((part, i) => 
       regex.test(part) ? <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-100 rounded-sm px-0.5">{part}</mark> : part
@@ -51,8 +68,8 @@ export default function TransactionRow({
       <TableCell><TransactionTypeBadge type={transaction.type} /></TableCell>
       <TableCell className="text-right">
         <CurrencyDisplay
-          amount={transaction.amount}
-          className={cn('font-medium', transaction.type === 'income' ? 'text-success' : 'text-danger')}
+          amount={displayAmount}
+          className={cn('font-medium', amountClass)}
         />
       </TableCell>
       {showActions && (

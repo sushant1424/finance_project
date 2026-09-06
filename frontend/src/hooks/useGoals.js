@@ -7,6 +7,9 @@ import {
   updateGoal,
   deleteGoal,
   contributeToGoal,
+  completeGoal,
+  withdrawGoal,
+  convertGoal,
 } from '@/store/goalSlice';
 
 export function useGoals(autoFetch = true) {
@@ -28,6 +31,9 @@ export function useGoals(autoFetch = true) {
     update: useCallback((id, d) => dispatch(updateGoal({ id, data: d })), [dispatch]),
     remove: useCallback((id) => dispatch(deleteGoal(id)), [dispatch]),
     contribute: useCallback((id, d) => dispatch(contributeToGoal({ id, data: d })), [dispatch]),
+    complete: useCallback((id) => dispatch(completeGoal(id)), [dispatch]),
+    withdraw: useCallback((id, d) => dispatch(withdrawGoal({ id, data: d })), [dispatch]),
+    convert: useCallback((id, d) => dispatch(convertGoal({ id, data: d })), [dispatch]),
     getContributions: useCallback((id) => goalApi.getContributions(id), []),
   };
 }

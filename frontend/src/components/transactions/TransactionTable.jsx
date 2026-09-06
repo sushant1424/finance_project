@@ -17,6 +17,7 @@ export default function TransactionTable({
   showSelection = false,
   className,
   searchQuery = '',
+  relativeAccountId,
 }) {
   if (loading) return <SkeletonTable rows={8} columns={showSelection ? 6 : 5} className={className} />;
 
@@ -62,6 +63,7 @@ export default function TransactionTable({
               onDuplicate={onDuplicate}
               showActions={Boolean(onEdit || onDelete || onDuplicate)}
               searchQuery={searchQuery}
+              relativeAccountId={relativeAccountId}
             />
           ))}
         </TableBody>

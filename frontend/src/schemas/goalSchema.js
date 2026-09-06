@@ -6,7 +6,7 @@ export const goalSchema = z.object({
   current_amount: z.coerce.number().min(0, 'Current amount cannot be negative').default(0),
   target_date: z.string().min(1, 'Target date is required'),
   icon: z.string().default('🎯'),
-  color: z.string().default('#06b6d4'),
+  color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color').default('#06b6d4'),
 });
 
 export const goalUpdateSchema = goalSchema.partial();

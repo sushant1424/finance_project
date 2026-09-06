@@ -6,20 +6,22 @@ export const CATEGORIES = [
   { id: 'health', label: 'Health', icon: 'Heart', color: '#ef4444' },
   { id: 'education', label: 'Education', icon: 'GraduationCap', color: '#06b6d4' },
   { id: 'shopping', label: 'Shopping', icon: 'ShoppingBag', color: '#f97316' },
-  { id: 'utilities', label: 'Utilities', icon: 'Zap', color: '#eab308' },
+  { id: 'utilities', label: 'Utilities', icon: 'Zap', color: '#14b8a6' },
   { id: 'travel', label: 'Travel', icon: 'Plane', color: '#10b981' },
   { id: 'personal', label: 'Personal Care', icon: 'Smile', color: '#a855f7' },
-  { id: 'investment', label: 'Investment', icon: 'TrendingUp', color: '#22c55e' },
+  { id: 'investment', label: 'Investment', icon: 'TrendingUp', color: '#6366f1' },
   { id: 'salary', label: 'Salary', icon: 'Briefcase', color: '#22c55e' },
-  { id: 'freelance', label: 'Freelance', icon: 'Laptop', color: '#06b6d4' },
-  { id: 'business', label: 'Business', icon: 'Building2', color: '#8b5cf6' },
+  { id: 'freelance', label: 'Freelance', icon: 'Laptop', color: '#0ea5e9' },
+  { id: 'business', label: 'Business', icon: 'Building2', color: '#64748b' },
   { id: 'other', label: 'Other', icon: 'MoreHorizontal', color: '#71717a' },
+  { id: 'transfer', label: 'Transfer', icon: 'ArrowLeftRight', color: '#64748b' },
+  { id: 'savings', label: 'Savings', icon: 'PiggyBank', color: '#22c55e' },
 ];
 
 export const getCategoryById = (id) => CATEGORIES.find((c) => c.id === id);
 
 export const EXPENSE_CATEGORIES = CATEGORIES.filter(
-  (c) => !['salary', 'freelance', 'business', 'investment'].includes(c.id),
+  (c) => !['salary', 'freelance', 'business', 'investment', 'transfer', 'savings'].includes(c.id),
 );
 
 export const INCOME_CATEGORIES = CATEGORIES.filter((c) =>

@@ -1,13 +1,13 @@
 import {
   UtensilsCrossed, Car, Home, Tv, Heart, GraduationCap, ShoppingBag, Zap,
-  Plane, Smile, TrendingUp, Briefcase, Laptop, Building2, MoreHorizontal,
+  Plane, Smile, TrendingUp, Briefcase, Laptop, Building2, MoreHorizontal, ArrowLeftRight, PiggyBank,
 } from 'lucide-react';
 import { getCategoryById } from '@/constants/categories';
 import { cn } from '@/lib/utils';
 
 const ICON_MAP = {
   UtensilsCrossed, Car, Home, Tv, Heart, GraduationCap, ShoppingBag, Zap,
-  Plane, Smile, TrendingUp, Briefcase, Laptop, Building2, MoreHorizontal,
+  Plane, Smile, TrendingUp, Briefcase, Laptop, Building2, MoreHorizontal, ArrowLeftRight, PiggyBank,
 };
 
 export default function CategoryIcon({ categoryId, size = 'md', showBackground = true, className }) {

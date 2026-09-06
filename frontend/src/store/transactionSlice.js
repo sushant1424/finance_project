@@ -1,70 +1,71 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import transactionApi from '@/api/transactionApi';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import transactionApi from "@/api/transactionApi";
+import { getApiErrorMessage } from "@/utils/apiError";
 
 export const fetchTransactions = createAsyncThunk(
-  'transactions/fetch',
+  "transactions/fetch",
   async (params, { rejectWithValue }) => {
     try {
       return await transactionApi.list(params);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to load transactions');
+      return rejectWithValue(getApiErrorMessage(err, "Failed to load transactions"));
     }
   },
 );
 
 export const createTransaction = createAsyncThunk(
-  'transactions/create',
+  "transactions/create",
   async (data, { rejectWithValue }) => {
     try {
       return await transactionApi.create(data);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to create transaction');
+      return rejectWithValue(getApiErrorMessage(err, "Failed to create transaction"));
     }
   },
 );
 
 export const updateTransaction = createAsyncThunk(
-  'transactions/update',
+  "transactions/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
       return await transactionApi.update(id, data);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to update transaction');
+      return rejectWithValue(getApiErrorMessage(err, "Failed to update transaction"));
     }
   },
 );
 
 export const deleteTransaction = createAsyncThunk(
-  'transactions/delete',
+  "transactions/delete",
   async (id, { rejectWithValue }) => {
     try {
       await transactionApi.remove(id);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to delete transaction');
+      return rejectWithValue(getApiErrorMessage(err, "Failed to delete transaction"));
     }
   },
 );
 
 export const bulkDeleteTransactions = createAsyncThunk(
-  'transactions/bulkDelete',
+  "transactions/bulkDelete",
   async (ids, { rejectWithValue }) => {
     try {
       await transactionApi.bulkDelete(ids);
       return ids;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to delete transactions');
+      return rejectWithValue(getApiErrorMessage(err, "Failed to delete transactions"));
     }
   },
 );
 
 const transactionSlice = createSlice({
-  name: 'transactions',
+  name: "transactions",
   initialState: {
     items: [],
     total: 0,
     page: 1,
-    filters: { sort_by: 'date', sort_order: 'desc', page: 1, limit: 20 },
+    filters: { sort_by: "date", sort_order: "desc", page: 1, limit: 10 },
     loading: false,
     error: null,
     selectedIds: [],
@@ -88,7 +89,9 @@ const transactionSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTransactions.pending, (state) => { state.loading = true; })
+      .addCase(fetchTransactions.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchTransactions.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload.items ?? action.payload;
@@ -109,7 +112,9 @@ const transactionSlice = createSlice({
       })
       .addCase(deleteTransaction.fulfilled, (state, action) => {
         state.items = state.items.filter((t) => t.id !== action.payload);
-        state.selectedIds = state.selectedIds.filter((id) => id !== action.payload);
+        state.selectedIds = state.selectedIds.filter(
+          (id) => id !== action.payload,
+        );
         state.total -= 1;
       })
       .addCase(bulkDeleteTransactions.fulfilled, (state, action) => {
@@ -121,5 +126,6 @@ const transactionSlice = createSlice({
   },
 });
 
-export const { setFilters, toggleSelect, clearSelection, selectAll } = transactionSlice.actions;
+export const { setFilters, toggleSelect, clearSelection, selectAll } =
+  transactionSlice.actions;
 export default transactionSlice.reducer;

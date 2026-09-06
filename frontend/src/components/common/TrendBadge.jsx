@@ -10,7 +10,8 @@ const CONFIG = {
 export default function TrendBadge({ direction = 'stable', value, className }) {
   const config = CONFIG[direction] ?? CONFIG.stable;
   const Icon = config.icon;
-  const displayValue = value !== undefined ? `${Math.abs(value)}%` : null;
+  const numeric = typeof value === 'number' ? value : parseFloat(value);
+  const displayValue = Number.isFinite(numeric) ? `${numeric}%` : null;
 
   return (
     <span

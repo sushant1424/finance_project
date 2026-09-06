@@ -1,46 +1,66 @@
-import EmptyState from '@/components/common/EmptyState';
-import SkeletonCard from '@/components/common/SkeletonCard';
-import NotificationItem from '@/components/notifications/NotificationItem';
-import { useNotifications } from '@/hooks/useNotifications';
-import { Bell } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bell, PiggyBank, RefreshCw, Target } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export default function NotificationList() {
-  const { items, loading, markRead } = useNotifications();
+const TYPE_META = {
+  budget: { icon: PiggyBank, label: 'Budget' },
+  goal: { icon: Target, label: 'Goal' },
+  bill: { icon: RefreshCw, label: 'Bill' },
+};
 
-  if (loading && !items.length) {
-    return <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} className="h-24" />)}</div>;
-  }
+const SEVERITY_CLASS = {
+  high: 'border-danger/30 bg-danger/5',
+  medium: 'border-warning/30 bg-warning/5',
+  low: 'border-border bg-surface-1',
+};
 
-  if (!items.length) {
-    return (
-      <EmptyState
-        icon={Bell}
-        title="All clear"
-        description="No active alerts. Anomalies, budget warnings, and goal reminders will show up here."
-      />
-    );
-  }
-
-  const groups = [
-    { key: 'anomaly', label: 'Anomalies' },
-    { key: 'budget', label: 'Budget warnings' },
-    { key: 'goal', label: 'Goal reminders' },
-  ];
-
+export default function NotificationList({ items, onMarkRead }) {
   return (
-    <div className="space-y-8">
-      {groups.map(({ key, label }) => {
-        const group = items.filter((n) => n.type === key);
-        if (!group.length) return null;
+    <ul className="space-y-2">
+      {items.map((n) => {
+        const meta = TYPE_META[n.type] ?? { icon: Bell, label: n.type };
+        const Icon = meta.icon;
         return (
-          <section key={key}>
-            <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-muted">{label}</h2>
-            <div className="space-y-3">
-              {group.map((n) => <NotificationItem key={n.id} notification={n} onMarkRead={markRead} />)}
+          <li key={n.id}>
+            <div
+              className={cn(
+                'flex items-start gap-3 rounded-xl border px-4 py-3',
+                SEVERITY_CLASS[n.severity] ?? SEVERITY_CLASS.low,
+                n.read && 'opacity-60',
+              )}
+            >
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-2">
+                <Icon className="h-4 w-4 text-muted" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">{n.title}</p>
+                  <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium uppercase text-muted">
+                    {meta.label}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-muted">{n.message}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  {n.action_path && (
+                    <Link to={n.action_path} className="text-xs text-primary hover:underline">
+                      Open →
+                    </Link>
+                  )}
+                  {!n.read && (
+                    <button
+                      type="button"
+                      onClick={() => onMarkRead(n.id)}
+                      className="text-xs text-muted hover:text-foreground"
+                    >
+                      Mark read
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </section>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

@@ -42,49 +42,22 @@ export const fetchMonthlyComparison = createAsyncThunk(
   },
 );
 
-export const fetchSpendingTrend = createAsyncThunk(
-  'analytics/trend',
-  async ({ dateFrom, dateTo, alpha }, { rejectWithValue }) => {
-    try {
-      return await analyticsApi.trend(dateFrom, dateTo, alpha);
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to load trend');
-    }
-  },
-);
-
-export const fetchInsights = createAsyncThunk('analytics/insights', async (_, { rejectWithValue }) => {
-  try {
-    return await analyticsApi.insights();
-  } catch (err) {
-    return rejectWithValue(err.response?.data?.detail || 'Failed to load insights');
-  }
-});
-
 const analyticsSlice = createSlice({
   name: 'analytics',
   initialState: {
     dashboard: null,
-    insights: null,
     cashflow: [],
     categories: [],
     monthly: [],
-    trend: null,
     loading: false,
     error: null,
-    trendAlpha: 0.3,
   },
   reducers: {
-    setTrendAlpha: (state, action) => {
-      state.trendAlpha = action.payload;
-    },
     clearAnalytics: (state) => {
       state.dashboard = null;
-      state.insights = null;
       state.cashflow = [];
       state.categories = [];
       state.monthly = [];
-      state.trend = null;
     },
   },
   extraReducers: (builder) => {
@@ -100,11 +73,9 @@ const analyticsSlice = createSlice({
       })
       .addCase(fetchCashflow.fulfilled, (state, action) => { state.cashflow = action.payload; })
       .addCase(fetchCategoryBreakdown.fulfilled, (state, action) => { state.categories = action.payload; })
-      .addCase(fetchMonthlyComparison.fulfilled, (state, action) => { state.monthly = action.payload; })
-      .addCase(fetchSpendingTrend.fulfilled, (state, action) => { state.trend = action.payload; })
-      .addCase(fetchInsights.fulfilled, (state, action) => { state.insights = action.payload; });
+      .addCase(fetchMonthlyComparison.fulfilled, (state, action) => { state.monthly = action.payload; });
   },
 });
 
-export const { setTrendAlpha, clearAnalytics } = analyticsSlice.actions;
+export const { clearAnalytics } = analyticsSlice.actions;
 export default analyticsSlice.reducer;

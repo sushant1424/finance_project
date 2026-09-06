@@ -1,23 +1,25 @@
 import { useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SkeletonCard from '@/components/common/SkeletonCard';
 import CashFlowAreaChart from '@/components/charts/CashFlowAreaChart';
+import DashboardPanel from '@/features/dashboard/DashboardPanel';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { DEFAULT_CHART_HEIGHT } from '@/constants/chartConfig';
+
+const CHART_HEIGHT = 260;
 
 export default function DashboardCharts() {
   const { cashflow, fetchCashflow, loading } = useAnalytics();
 
-  useEffect(() => { fetchCashflow(6); }, [fetchCashflow]);
+  useEffect(() => {
+    fetchCashflow(6);
+  }, [fetchCashflow]);
 
-  if (loading && !cashflow.length) return <SkeletonCard className="h-[340px]" />;
+  if (loading && !cashflow.length) {
+    return <SkeletonCard className="h-full min-h-[320px]" />;
+  }
 
   return (
-    <Card>
-      <CardHeader><CardTitle>Cashflow (6 months)</CardTitle></CardHeader>
-      <CardContent>
-        <CashFlowAreaChart data={cashflow} height={DEFAULT_CHART_HEIGHT} />
-      </CardContent>
-    </Card>
+    <DashboardPanel title="Cashflow" minHeight="min-h-[340px]">
+      <CashFlowAreaChart data={cashflow} height={CHART_HEIGHT} />
+    </DashboardPanel>
   );
 }

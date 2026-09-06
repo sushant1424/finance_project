@@ -15,8 +15,7 @@ export default function LandingHero() {
           <span className="text-primary">finally making sense</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted lg:text-lg">
-          Track spending, set budgets, detect unusual expenses, and reach your savings goals —
-          all in one clean dashboard.
+          Track spending, set budgets, and see clear reports. Built for students and tight budgets.
         </p>
         {initialized && (
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">

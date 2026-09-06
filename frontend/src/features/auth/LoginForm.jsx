@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { loginSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/constants/routes';
+import { toastAsyncResult } from '@/utils/toastAsyncResult';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +14,7 @@ export default function LoginForm() {
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
   const from = location.state?.from?.pathname ?? ROUTES.DASHBOARD;
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -21,8 +23,7 @@ export default function LoginForm() {
 
   const onSubmit = async (data) => {
     const result = await login(data);
-    if (result?.meta?.requestStatus === 'fulfilled') {
-      toast.success(`Welcome back, ${result.payload.user?.name ?? 'there'}!`);
+    if (toastAsyncResult(result, { success: `Welcome back, ${result.payload?.user?.name ?? 'there'}!` })) {
       navigate(from, { replace: true });
     }
   };
@@ -37,12 +38,18 @@ export default function LoginForm() {
           <Input id="email" type="email" {...register('email')} className="mt-1.5" />
           {errors.email && <p className="mt-1 text-sm text-danger">{errors.email.message}</p>}
         </div>
-        <div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <span className="text-xs text-muted">Forgot password?</span>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
           <Input id="password" type="password" {...register('password')} className="mt-1.5" />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className="text-xs text-muted hover:text-primary transition-colors"
+              onClick={() => navigate(ROUTES.FORGOT_PASSWORD)}
+            >
+              Forgot password?
+            </button>
+          </div>
           {errors.password && <p className="mt-1 text-sm text-danger">{errors.password.message}</p>}
         </div>
         {error && <p className="text-sm text-danger">{error}</p>}

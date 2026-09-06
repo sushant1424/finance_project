@@ -28,7 +28,7 @@ export default function CashFlowAreaChart({ data = [], height = DEFAULT_CHART_HE
   }
 
   return (
-    <div className={className} style={{ height }}>
+    <div className={className} style={{ height, minWidth: 0 }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={CHART_MARGIN}>
           <CartesianGrid {...GRID_PROPS} />

@@ -8,11 +8,14 @@ export default function StatCard({
   icon: Icon,
   trend,
   trendValue,
+  trendLabel,
   valueClassName,
   className,
   children,
   to,
 }) {
+  const showTrend = trend && trendValue !== undefined && Number.isFinite(trendValue);
+
   const content = (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -21,9 +24,10 @@ export default function StatCard({
           <p className={cn('mt-2 text-2xl font-semibold tabular-nums text-foreground', valueClassName)}>
             {value}
           </p>
-          {trend && trendValue !== undefined && (
-            <div className="mt-2">
+          {showTrend && (
+            <div className="mt-2 flex items-center gap-2">
               <TrendBadge direction={trend} value={trendValue} />
+              {trendLabel && <span className="text-[11px] text-muted">{trendLabel}</span>}
             </div>
           )}
         </div>
@@ -38,8 +42,8 @@ export default function StatCard({
   );
 
   const cardClass = cn(
-    'rounded-xl border border-border bg-surface-1 p-6',
-    to && 'transition-colors hover:border-primary/30 hover:bg-surface-2/50',
+    'rounded-xl border border-border bg-surface-1 p-5 shadow-sm',
+    to && 'transition-colors hover:border-primary/30',
     className,
   );
 

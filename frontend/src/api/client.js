@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, PUBLIC_ROUTES } from '@/constants/routes';
 
 const TOKEN_KEY = 'finsight_token';
 
@@ -23,9 +23,14 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthRequest = error.config?.url?.includes('/auth/login')
+      || error.config?.url?.includes('/auth/register');
+
+    if (error.response?.status === 401 && !isAuthRequest) {
       clearStoredToken();
-      if (!window.location.pathname.startsWith(ROUTES.LOGIN)) {
+      const currentPath = window.location.pathname;
+      const isPublic = PUBLIC_ROUTES.some((r) => r === currentPath || (r !== '/' && currentPath.startsWith(r)));
+      if (!isPublic) {
         window.location.href = ROUTES.LOGIN;
       }
     }

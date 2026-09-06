@@ -3,24 +3,24 @@ import { Wallet, Target, LineChart } from 'lucide-react';
 const STEPS = [
   {
     icon: Wallet,
-    title: 'Add income & expenses',
-    desc: 'Log transactions manually. Every entry is stored securely and used to power your insights.',
+    title: 'Add income and expenses',
+    desc: 'Log what comes in and what goes out. Assign each entry to the right account.',
   },
   {
     icon: Target,
-    title: 'Set budgets & goals',
-    desc: 'Define monthly spending limits per category and create savings goals with target dates.',
+    title: 'Set budgets and goals',
+    desc: 'Choose monthly spending limits and create savings goals with target dates.',
   },
   {
     icon: LineChart,
-    title: 'Let FinSight analyze',
-    desc: 'Get your Health Score, smart insights, anomaly alerts, and spending-day patterns — all from your real data.',
+    title: 'See the full picture',
+    desc: 'Get category tips, spending groups, and clear charts from your own numbers.',
   },
 ];
 
 export default function LandingHowItWorks() {
   return (
-    <section className="border-y border-border bg-surface-1/30 px-6 py-20">
+    <section className="border-y border-border bg-surface-1 px-6 py-20">
       <div className="mx-auto max-w-5xl">
         <div className="text-center">
           <p className="text-sm font-medium uppercase tracking-wider text-primary">How it works</p>
@@ -29,7 +29,7 @@ export default function LandingHowItWorks() {
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {STEPS.map(({ icon: Icon, title, desc }, i) => (
-            <div key={title} className="rounded-xl border border-border bg-surface-1 p-6 text-center">
+            <div key={title} className="rounded-xl border border-border bg-background p-6 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Icon className="h-5 w-5" />
               </div>

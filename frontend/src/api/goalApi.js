@@ -26,6 +26,21 @@ export const goalApi = {
     return res.data;
   },
 
+  complete: async (id) => {
+    const res = await client.post(`/goals/${id}/complete`);
+    return res.data;
+  },
+
+  withdraw: async (id, data) => {
+    const res = await client.post(`/goals/${id}/withdraw`, data);
+    return res.data;
+  },
+
+  convert: async (id, data) => {
+    const res = await client.post(`/goals/${id}/convert`, data);
+    return res.data;
+  },
+
   getContributions: async (id) => {
     const res = await client.get(`/goals/${id}/contributions`);
     return res.data;

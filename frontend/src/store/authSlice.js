@@ -2,12 +2,13 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import authApi from '@/api/authApi';
 import { getStoredToken, setStoredToken, clearStoredToken } from '@/api/client';
 import { DEFAULT_CURRENCY } from '@/constants/currencies';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 export const login = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     return await authApi.login(credentials);
   } catch (err) {
-    return rejectWithValue(err.response?.data?.detail || 'Login failed');
+    return rejectWithValue(getApiErrorMessage(err, 'Login failed'));
   }
 });
 
@@ -15,7 +16,7 @@ export const register = createAsyncThunk('auth/register', async (data, { rejectW
   try {
     return await authApi.register(data);
   } catch (err) {
-    return rejectWithValue(err.response?.data?.detail || 'Registration failed');
+    return rejectWithValue(getApiErrorMessage(err, 'Registration failed'));
   }
 });
 
@@ -23,7 +24,7 @@ export const fetchMe = createAsyncThunk('auth/fetchMe', async (_, { rejectWithVa
   try {
     return await authApi.getMe();
   } catch (err) {
-    return rejectWithValue(err.response?.data?.detail || 'Failed to load profile');
+    return rejectWithValue(getApiErrorMessage(err, 'Failed to load profile'));
   }
 });
 
@@ -31,7 +32,7 @@ export const updateProfile = createAsyncThunk('auth/updateProfile', async (data,
   try {
     return await authApi.updateProfile(data);
   } catch (err) {
-    return rejectWithValue(err.response?.data?.detail || 'Update failed');
+    return rejectWithValue(getApiErrorMessage(err, 'Update failed'));
   }
 });
 
@@ -75,7 +76,9 @@ const authSlice = createSlice({
         state.loading = false;
         state.token = action.payload.access_token;
         state.user = action.payload.user;
+        state.error = null;
         state.initialized = true;
+        setStoredToken(action.payload.access_token);
       })
       .addCase(login.rejected, rejected)
       .addCase(register.pending, pending)
@@ -83,7 +86,9 @@ const authSlice = createSlice({
         state.loading = false;
         state.token = action.payload.access_token;
         state.user = action.payload.user;
+        state.error = null;
         state.initialized = true;
+        setStoredToken(action.payload.access_token);
       })
       .addCase(register.rejected, rejected)
       .addCase(fetchMe.pending, pending)
@@ -102,7 +107,9 @@ const authSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
-      });
+        state.error = null;
+      })
+      .addCase(updateProfile.rejected, rejected);
   },
 });
 

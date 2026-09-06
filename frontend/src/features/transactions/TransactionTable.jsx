@@ -4,13 +4,16 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import TransactionTableUI from '@/components/transactions/TransactionTable';
 import TransactionEditDialog from '@/features/transactions/TransactionEditDialog';
+import Pagination from '@/components/common/Pagination';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useTransactions } from '@/hooks/useTransactions';
+import { toastAsyncResult } from '@/utils/toastAsyncResult';
+import { showDeleteToast } from '@/utils/deleteToast';
 
 export default function TransactionTable() {
   const {
     items, loading, total, filters, setFilters, selectedIds,
-    toggleSelect, selectAll, clearSelection, remove, bulkDelete, exportCsv, fetch,
+    toggleSelect, selectAll, clearSelection, remove, bulkDelete, exportCsv, fetch, create,
   } = useTransactions();
   const confirm = useConfirm();
   const [editTx, setEditTx] = useState(null);
@@ -18,27 +21,30 @@ export default function TransactionTable() {
   const handleDelete = async (tx) => {
     const ok = await confirm({
       title: 'Delete transaction?',
-      description: `Delete "${tx.description}" permanently?`,
+      description: `Move "${tx.description}" to trash? You can undo within 30 days.`,
       confirmLabel: 'Delete',
       variant: 'destructive',
     });
     if (!ok) return;
     const r = await remove(tx.id);
-    if (r?.meta?.requestStatus === 'fulfilled') { toast.success('Transaction deleted'); fetch(); }
+    if (toastAsyncResult(r, { error: 'Failed to delete transaction' })) {
+      showDeleteToast(tx.id, fetch);
+      fetch();
+    }
   };
 
   const handleBulkDelete = async () => {
     const ok = await confirm({
       title: `Delete ${selectedIds.length} transactions?`,
-      description: 'This action cannot be undone.',
+      description: 'Moved to trash. You can undo each one within 30 days.',
       confirmLabel: 'Delete all',
       variant: 'destructive',
     });
     if (!ok) return;
     const r = await bulkDelete(selectedIds);
-    if (r?.meta?.requestStatus === 'fulfilled') {
+    if (toastAsyncResult(r, { error: 'Failed to delete transactions' })) {
+      selectedIds.forEach((id) => showDeleteToast(id, fetch));
       clearSelection();
-      toast.success('Transactions deleted');
       fetch();
     }
   };
@@ -56,14 +62,12 @@ export default function TransactionTable() {
       category: tx.category,
       type: tx.type,
       date: new Date().toISOString().split('T')[0],
+      account_id: tx.account_id,
+      to_account_id: tx.to_account_id,
     };
     const r = await create(data);
-    if (r?.meta?.requestStatus === 'fulfilled') {
-      if (r.payload?.is_anomaly) {
-        toast('⚠️ Unusual expense detected!', { style: { background: '#422006', color: '#fef3c7', border: '1px solid #f59e0b' } });
-      } else {
-        toast.success('Transaction duplicated');
-      }
+    if (toastAsyncResult(r, { error: 'Failed to duplicate transaction' })) {
+      toast.success('Transaction duplicated');
       fetch();
     }
   };
@@ -94,9 +98,6 @@ export default function TransactionTable() {
     }
   };
 
-  const start = (filters.page - 1) * filters.limit + 1;
-  const end = Math.min(filters.page * filters.limit, total);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -125,14 +126,12 @@ export default function TransactionTable() {
         showSelection
         searchQuery={filters.search || ''}
       />
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span>{total ? `Showing ${start}–${end} of ${total}` : 'No results'}</span>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled={filters.page <= 1} onClick={() => setFilters({ page: filters.page - 1 })}>Previous</Button>
-          <span>Page {filters.page}</span>
-          <Button variant="outline" size="sm" disabled={end >= total} onClick={() => setFilters({ page: filters.page + 1 })}>Next</Button>
-        </div>
-      </div>
+      <Pagination
+        page={filters.page}
+        pageSize={filters.limit}
+        total={total}
+        onPageChange={(p) => setFilters({ page: p })}
+      />
       {editTx && <TransactionEditDialog transaction={editTx} open onClose={() => setEditTx(null)} />}
     </div>
   );

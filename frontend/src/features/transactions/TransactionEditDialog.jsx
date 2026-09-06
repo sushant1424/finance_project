@@ -2,6 +2,7 @@ import toast from 'react-hot-toast';
 import TransactionForm from '@/components/transactions/TransactionForm';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useTransactions } from '@/hooks/useTransactions';
+import { toastAsyncResult } from '@/utils/toastAsyncResult';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function TransactionEditDialog({ transaction, open, onClose }) {
@@ -16,8 +17,7 @@ export default function TransactionEditDialog({ transaction, open, onClose }) {
     });
     if (!ok) return;
     const result = await update(transaction.id, data);
-    if (result?.meta?.requestStatus === 'fulfilled') {
-      toast.success('Transaction updated');
+    if (toastAsyncResult(result, { success: 'Transaction updated', error: 'Failed to update transaction' })) {
       fetch();
       onClose();
     }

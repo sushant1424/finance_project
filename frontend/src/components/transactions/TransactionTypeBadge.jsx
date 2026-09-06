@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 const TYPE_CONFIG = {
   income: { label: 'Income', variant: 'success' },
   expense: { label: 'Expense', variant: 'destructive' },
+  transfer: { label: 'Transfer', variant: 'secondary' },
 };
 
 export default function TransactionTypeBadge({ type, className }) {

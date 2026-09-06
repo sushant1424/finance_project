@@ -6,17 +6,26 @@ import MonthSelector from '@/features/budgets/MonthSelector';
 import BudgetSummaryStats from '@/features/budgets/BudgetSummaryStats';
 import BudgetCardsGrid from '@/features/budgets/BudgetCardsGrid';
 import BudgetSuggestions from '@/features/budgets/BudgetSuggestions';
+import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useBudgets } from '@/hooks/useBudgets';
+import { toastAsyncResult } from '@/utils/toastAsyncResult';
 import { Button } from '@/components/ui/button';
 
 export default function BudgetsPage() {
   const { items, month, year, create, fetch } = useBudgets();
   const [pendingSuggestion, setPendingSuggestion] = useState(null);
   const gridRef = useRef(null);
+  const confirm = useConfirm();
 
   const existingCategories = items.map((b) => b.category);
 
   const handleApplySuggestion = async (suggestion) => {
+    const ok = await confirm({
+      title: 'Create budget from suggestion?',
+      description: `Set ${suggestion.category.replace('_', ' ')} limit to NPR ${suggestion.suggested_limit}?`,
+      confirmLabel: 'Create',
+    });
+    if (!ok) return;
     const data = {
       category: suggestion.category,
       monthly_limit: suggestion.suggested_limit,
@@ -24,13 +33,21 @@ export default function BudgetsPage() {
       year,
     };
     const r = await create(data);
-    if (r?.meta?.requestStatus === 'fulfilled') {
-      toast.success(`Budget created for ${suggestion.category.replace('_', ' ')}`);
+    if (toastAsyncResult(r, {
+      success: `Budget created for ${suggestion.category.replace('_', ' ')}`,
+      error: 'Failed to create budget',
+    })) {
       fetch();
     }
   };
 
-  const handleExportCsv = () => {
+  const handleExportCsv = async () => {
+    const ok = await confirm({
+      title: 'Export budgets?',
+      description: 'Download this month\'s budgets as CSV.',
+      confirmLabel: 'Export',
+    });
+    if (!ok) return;
     const headers = ['Category', 'Monthly Limit', 'Spent', 'Remaining', 'Utilization %', 'Status'];
     const rows = items.map((b) => [
       b.category,

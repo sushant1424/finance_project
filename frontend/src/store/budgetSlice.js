@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import budgetApi from '@/api/budgetApi';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 const now = new Date();
 
@@ -9,7 +10,7 @@ export const fetchBudgets = createAsyncThunk(
     try {
       return await budgetApi.list(month, year);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to load budgets');
+      return rejectWithValue(getApiErrorMessage(err, 'Failed to load budgets'));
     }
   },
 );
@@ -20,7 +21,7 @@ export const fetchBudgetSummary = createAsyncThunk(
     try {
       return await budgetApi.summary(month, year);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to load budget summary');
+      return rejectWithValue(getApiErrorMessage(err, 'Failed to load budget summary'));
     }
   },
 );
@@ -31,7 +32,7 @@ export const createBudget = createAsyncThunk(
     try {
       return await budgetApi.create(data);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to create budget');
+      return rejectWithValue(getApiErrorMessage(err, 'Failed to create budget'));
     }
   },
 );
@@ -42,7 +43,7 @@ export const updateBudget = createAsyncThunk(
     try {
       return await budgetApi.update(id, data);
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to update budget');
+      return rejectWithValue(getApiErrorMessage(err, 'Failed to update budget'));
     }
   },
 );
@@ -54,7 +55,7 @@ export const deleteBudget = createAsyncThunk(
       await budgetApi.remove(id);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.detail || 'Failed to delete budget');
+      return rejectWithValue(getApiErrorMessage(err, 'Failed to delete budget'));
     }
   },
 );

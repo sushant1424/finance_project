@@ -3,13 +3,21 @@ import { Download } from 'lucide-react';
 import PageHeader from '@/components/common/PageHeader';
 import GoalsGrid from '@/features/goals/GoalsGrid';
 import GoalFormDialog from '@/features/goals/GoalFormDialog';
+import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useGoals } from '@/hooks/useGoals';
 import { Button } from '@/components/ui/button';
 
 export default function GoalsPage() {
   const { items } = useGoals();
+  const confirm = useConfirm();
 
-  const handleExportCsv = () => {
+  const handleExportCsv = async () => {
+    const ok = await confirm({
+      title: 'Export goals?',
+      description: 'Download all goals as CSV.',
+      confirmLabel: 'Export',
+    });
+    if (!ok) return;
     const headers = ['Name', 'Target Amount', 'Current Amount', 'Progress %', 'Target Date', 'Status'];
     const rows = items.map((g) => {
       const pct = g.target_amount ? ((g.current_amount / g.target_amount) * 100).toFixed(1) : '0';

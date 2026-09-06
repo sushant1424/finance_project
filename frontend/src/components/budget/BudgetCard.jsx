@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CurrencyDisplay from '@/components/common/CurrencyDisplay';
@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 export default function BudgetCard({ budget, onEdit, onDelete, className }) {
   const category = getCategoryById(budget.category);
   const spent = budget.spent ?? budget.amount_spent ?? 0;
-  const limit = budget.monthly_limit ?? 0;
+  const limit = budget.effective_limit ?? budget.monthly_limit ?? 0;
   const pace = normalizePace(budget.pace);
 
   return (
@@ -25,6 +25,15 @@ export default function BudgetCard({ budget, onEdit, onDelete, className }) {
             <p className="text-sm text-muted">
               <CurrencyDisplay amount={spent} /> / <CurrencyDisplay amount={limit} />
             </p>
+            {budget.rollover && (
+              <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted">
+                <RefreshCw className="h-3 w-3" />
+                Rollover
+                {budget.rollover_amount > 0 && (
+                  <> · +<CurrencyDisplay amount={budget.rollover_amount} /> carried</>
+                )}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex gap-1">
@@ -33,7 +42,12 @@ export default function BudgetCard({ budget, onEdit, onDelete, className }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <BudgetProgressBar spent={spent} limit={limit} />
+        <BudgetProgressBar
+          spent={spent}
+          limit={limit}
+          daysLeft={budget.days_left}
+          periodElapsedPct={budget.period_elapsed_pct}
+        />
         <BudgetPaceIndicator pace={pace} />
       </CardContent>
     </Card>

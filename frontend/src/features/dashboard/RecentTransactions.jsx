@@ -1,57 +1,61 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeftRight } from 'lucide-react';
 import EmptyState from '@/components/common/EmptyState';
 import CurrencyDisplay from '@/components/common/CurrencyDisplay';
+import DashboardPanel from '@/features/dashboard/DashboardPanel';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/formatDate';
 import { getCategoryById } from '@/constants/categories';
 import { ROUTES } from '@/constants/routes';
-import { ArrowLeftRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const MAX = 5;
 
 export default function RecentTransactions() {
   const { dashboard } = useAnalytics(true);
   const { currency, showCents, user } = useAuth();
   const navigate = useNavigate();
-  const items = dashboard?.recent_transactions ?? [];
+  const items = (dashboard?.recent_transactions ?? []).slice(0, MAX);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Recent Transactions</CardTitle>
-        <Link to={ROUTES.TRANSACTIONS} className="text-sm text-primary hover:underline">View all</Link>
-      </CardHeader>
-      <CardContent>
-        {items.length === 0 ? (
-          <EmptyState
-            icon={ArrowLeftRight}
-            title="No transactions yet"
-            description="Add your first transaction to start tracking your finances."
-            actionLabel="Add transaction"
-            onAction={() => navigate(ROUTES.TRANSACTIONS)}
-          />
-        ) : (
-          <ul className="divide-y divide-border">
-            {items.slice(0, 8).map((tx) => (
-              <li key={tx.id} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="font-medium text-foreground">{tx.description}</p>
-                  <p className="text-xs text-muted">
-                    {getCategoryById(tx.category)?.label ?? tx.category} · {formatDate(tx.date, user?.date_format)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {tx.is_anomaly && <Badge variant="destructive">Anomaly</Badge>}
-                  <span className={tx.type === 'income' ? 'text-success' : 'text-danger'}>
-                    <CurrencyDisplay amount={tx.amount} currency={currency} showCents={showCents} />
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+    <DashboardPanel title="Recent transactions" to={ROUTES.TRANSACTIONS} actionLabel="View all →" minHeight="min-h-[340px]">
+      {items.length === 0 ? (
+        <EmptyState
+          icon={ArrowLeftRight}
+          title="No transactions yet"
+          description="Log something to confirm it shows up here."
+          actionLabel="Add transaction"
+          onAction={() => navigate(ROUTES.TRANSACTIONS)}
+        />
+      ) : (
+        <ul className="divide-y divide-border">
+          {items.map((tx) => (
+            <li key={tx.id} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{tx.description}</p>
+                <p className="text-xs text-muted">
+                  {getCategoryById(tx.category)?.label ?? tx.category}
+                  {' · '}
+                  {formatDate(tx.date, user?.date_format)}
+                </p>
+              </div>
+              <span
+                className={cn(
+                  'shrink-0 text-base font-semibold tabular-nums',
+                  tx.type === 'income'
+                    ? 'text-success'
+                    : tx.type === 'transfer'
+                      ? 'text-muted'
+                      : 'text-danger',
+                )}
+              >
+                <CurrencyDisplay amount={tx.amount} currency={currency} showCents={showCents} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </DashboardPanel>
   );
 }

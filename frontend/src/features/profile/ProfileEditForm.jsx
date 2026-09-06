@@ -1,9 +1,9 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import toast from 'react-hot-toast';
 import { profileSchema } from '@/schemas/authSchema';
 import { useAuth } from '@/hooks/useAuth';
 import { useConfirm } from '@/components/common/ConfirmProvider';
+import { toastAsyncResult } from '@/utils/toastAsyncResult';
 import { CURRENCIES } from '@/constants/currencies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ export default function ProfileEditForm() {
     });
     if (!ok) return;
     const result = await updateProfile(data);
-    if (result?.meta?.requestStatus === 'fulfilled') toast.success('Profile updated');
+    toastAsyncResult(result, { success: 'Profile updated', error: 'Failed to update profile' });
   };
 
   return (

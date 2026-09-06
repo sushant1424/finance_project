@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import authApi from '@/api/authApi';
 import { useConfirm } from '@/components/common/ConfirmProvider';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { changePasswordSchema } from '@/schemas/authSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +28,7 @@ export default function SecuritySection() {
       toast.success('Password updated');
       reset();
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to update password');
+      toast.error(getApiErrorMessage(err, 'Failed to update password'));
     }
   };
 

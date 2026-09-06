@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import toast from 'react-hot-toast';
 import { Plus } from 'lucide-react';
 import GoalForm from '@/components/goals/GoalForm';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useGoals } from '@/hooks/useGoals';
+import { toastAsyncResult } from '@/utils/toastAsyncResult';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -16,7 +16,9 @@ export default function GoalFormDialog() {
     const ok = await confirm({ title: 'Create goal?', description: `Create "${data.name}" with target NPR ${data.target_amount}?`, confirmLabel: 'Create' });
     if (!ok) return;
     const result = await create(data);
-    if (result?.meta?.requestStatus === 'fulfilled') { toast.success('Goal created'); setOpen(false); }
+    if (toastAsyncResult(result, { success: 'Goal created', error: 'Failed to create goal' })) {
+      setOpen(false);
+    }
   };
 
   return (

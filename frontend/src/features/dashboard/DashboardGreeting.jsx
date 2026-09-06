@@ -1,5 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { formatDate } from '@/utils/formatDate';
+import AddTransactionDialog from '@/features/transactions/AddTransactionDialog';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -10,14 +12,22 @@ function getGreeting() {
 
 export default function DashboardGreeting() {
   const { user } = useAuth();
+  const { fetchDashboard } = useAnalytics();
   const firstName = user?.name?.split(' ')[0] ?? 'there';
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-foreground">
-        {getGreeting()}, {firstName} 👋
-      </h1>
-      <p className="mt-1 text-sm text-muted">{formatDate(new Date(), user?.date_format)}</p>
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">
+          {getGreeting()}, {firstName}
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          {formatDate(new Date(), user?.date_format)}
+        </p>
+      </div>
+      <div className="hidden sm:block">
+        <AddTransactionDialog onSuccess={() => fetchDashboard()} />
+      </div>
     </div>
   );
 }
