@@ -1,11 +1,11 @@
-import { Pencil, Trash2, Copy } from 'lucide-react';
+import { Pencil, Trash2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TableCell, TableRow } from '@/components/ui/table';
 import CurrencyDisplay from '@/components/common/CurrencyDisplay';
 import CategoryIcon from '@/components/transactions/CategoryIcon';
 import TransactionTypeBadge from '@/components/transactions/TransactionTypeBadge';
-import { getCategoryById } from '@/constants/categories';
+import { useResolveCategory } from '@/hooks/useResolveCategory';
 import { formatDate } from '@/utils/formatDate';
 import { cn } from '@/lib/utils';
 
@@ -16,11 +16,14 @@ export default function TransactionRow({
   onEdit,
   onDelete,
   onDuplicate,
+  onAcknowledgeAnomaly,
   showActions = true,
   searchQuery = '',
   relativeAccountId,
 }) {
-  const category = getCategoryById(transaction.category);
+  const resolve = useResolveCategory();
+  const category = resolve(transaction.category);
+  const anomaly = transaction.anomaly;
 
   const displayAmount =
     relativeAccountId && transaction.type === 'transfer'
@@ -38,12 +41,11 @@ export default function TransactionRow({
           ? 'text-muted'
           : undefined;
 
-  // Simple highlight function
   const renderHighlightedText = (text, search) => {
     if (!search.trim()) return text;
     const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
     const parts = text.split(regex);
-    return parts.map((part, i) => 
+    return parts.map((part, i) =>
       regex.test(part) ? <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 dark:text-yellow-100 rounded-sm px-0.5">{part}</mark> : part
     );
   };
@@ -60,8 +62,19 @@ export default function TransactionRow({
         <div className="flex items-center gap-3">
           <CategoryIcon categoryId={transaction.category} size="sm" />
           <div className="min-w-0">
-            <p className="truncate font-medium">{renderHighlightedText(transaction.description, searchQuery)}</p>
-            <p className="text-xs text-muted">{category?.label ?? transaction.category}</p>
+            <p className="truncate font-medium">
+              {anomaly && (
+                <span
+                  className="mr-1 inline-block"
+                  title={anomaly.reason || 'Unusual for this category'}
+                  aria-label="Unusual transaction"
+                >
+                  ⚠️
+                </span>
+              )}
+              {renderHighlightedText(transaction.description, searchQuery)}
+            </p>
+            <p className="text-xs text-muted">{category.label}</p>
           </div>
         </div>
       </TableCell>
@@ -73,8 +86,19 @@ export default function TransactionRow({
         />
       </TableCell>
       {showActions && (
-        <TableCell className="w-32 text-right">
+        <TableCell className="w-40 text-right">
           <div className="flex justify-end gap-1">
+            {anomaly && onAcknowledgeAnomaly && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted hover:text-foreground"
+                onClick={() => onAcknowledgeAnomaly(transaction)}
+                title="Yes, this is correct"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            )}
             {onDuplicate && (
               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted hover:text-foreground" onClick={() => onDuplicate(transaction)} title="Duplicate Transaction">
                 <Copy className="h-4 w-4" />

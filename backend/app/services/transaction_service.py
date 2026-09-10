@@ -23,7 +23,7 @@ def _purge_old_trash(user_id, db: Session) -> None:
     db.commit()
 
 
-def _serialize(t: Transaction) -> dict:
+def _serialize(t: Transaction, anomaly: dict | None = None) -> dict:
     return {
         "id": str(t.id),
         "type": t.type,
@@ -33,11 +33,23 @@ def _serialize(t: Transaction) -> dict:
         "date": t.date.isoformat(),
         "notes": t.notes,
         "is_recurring": t.is_recurring or False,
+        "anomaly_acknowledged": bool(getattr(t, "anomaly_acknowledged", False)),
+        "anomaly": anomaly,
         "account_id": str(t.account_id) if t.account_id else None,
         "to_account_id": str(t.to_account_id) if t.to_account_id else None,
         "deleted_at": t.deleted_at.isoformat() if t.deleted_at else None,
         "created_at": t.created_at.isoformat() if t.created_at else "",
     }
+
+
+def _annotate_list(user_id, items: list[Transaction], db: Session) -> list[dict]:
+    from app.services.anomaly_service import (
+        anomaly_payload_for_tx,
+        build_category_amount_index,
+    )
+
+    index = build_category_amount_index(user_id, db)
+    return [_serialize(t, anomaly=anomaly_payload_for_tx(t, index)) for t in items]
 
 
 def _parse_uuid(value) -> UUID | None:
@@ -94,7 +106,12 @@ def get_transactions(user_id, db: Session, params: dict) -> dict:
     order = desc(sort_col) if params.get("sort_order") == "desc" else asc(sort_col)
     page, limit = params.get("page", 1), params.get("limit", 20)
     items = q.order_by(order).offset((page - 1) * limit).limit(limit).all()
-    return {"items": [_serialize(t) for t in items], "total": total, "page": page, "limit": limit}
+    return {
+        "items": _annotate_list(user_id, items, db),
+        "total": total,
+        "page": page,
+        "limit": limit,
+    }
 
 
 def create_transaction(user_id, data: TransactionCreate, db: Session) -> dict:
@@ -198,9 +215,16 @@ def export_csv(user_id, db: Session, params: dict) -> str:
     params["limit"] = 10000
     params["page"] = 1
     result = get_transactions(user_id, db, params)
-    lines = ["date,type,category,description,amount,notes"]
+    accounts = {
+        str(a.id): a.name
+        for a in db.query(Account).filter(Account.user_id == user_id).all()
+    }
+    lines = ["date,description,category,type,amount,account,notes"]
     for t in result["items"]:
         notes = (t.get("notes") or "").replace(",", " ")
         desc = t["description"].replace(",", " ")
-        lines.append(f'{t["date"]},{t["type"]},{t["category"]},{desc},{t["amount"]},{notes}')
+        account = accounts.get(t.get("account_id") or "", "")
+        lines.append(
+            f'{t["date"]},{desc},{t["category"]},{t["type"]},{t["amount"]},{account},{notes}'
+        )
     return "\n".join(lines)

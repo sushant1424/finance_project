@@ -19,6 +19,7 @@ class Transaction(Base):
     date = Column(Date, nullable=False)
     notes = Column(Text)
     is_recurring = Column(Boolean, default=False)
+    anomaly_acknowledged = Column(Boolean, default=False)
     account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
     to_account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=True)
     deleted_at = Column(DateTime, nullable=True)

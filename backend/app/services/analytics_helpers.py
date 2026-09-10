@@ -1,5 +1,6 @@
 """Shared query helpers for analytics endpoints."""
 
+import calendar
 from datetime import date
 
 from sqlalchemy import extract, func
@@ -20,6 +21,26 @@ def sum_by_type(user_id, tx_type: str, month: int, year: int, db: Session) -> fl
             Transaction.type == tx_type,
             extract("month", Transaction.date) == month,
             extract("year", Transaction.date) == year,
+        )
+        .scalar()
+    )
+    return float(result or 0)
+
+
+def sum_by_type_through_day(
+    user_id, tx_type: str, month: int, year: int, through_day: int, db: Session
+) -> float:
+    """Sum amounts for a type from day 1 through `through_day` (inclusive)."""
+    last_day = calendar.monthrange(year, month)[1]
+    day = min(max(through_day, 1), last_day)
+    result = (
+        _active(db.query(func.coalesce(func.sum(Transaction.amount), 0)))
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == tx_type,
+            extract("month", Transaction.date) == month,
+            extract("year", Transaction.date) == year,
+            extract("day", Transaction.date) <= day,
         )
         .scalar()
     )

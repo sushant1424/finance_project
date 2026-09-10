@@ -12,6 +12,9 @@ def run_migrations(engine: Engine) -> None:
             conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP"))
             conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS account_id UUID"))
             conn.execute(text("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS to_account_id UUID"))
+            conn.execute(text(
+                "ALTER TABLE transactions ADD COLUMN IF NOT EXISTS anomaly_acknowledged BOOLEAN DEFAULT FALSE"
+            ))
             conn.execute(text("ALTER TABLE recurring_bills ADD COLUMN IF NOT EXISTS due_day INTEGER"))
 
             conn.execute(text("""

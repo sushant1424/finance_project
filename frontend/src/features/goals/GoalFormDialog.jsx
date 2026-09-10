@@ -4,6 +4,7 @@ import GoalForm from '@/components/goals/GoalForm';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useGoals } from '@/hooks/useGoals';
 import { toastAsyncResult } from '@/utils/toastAsyncResult';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -13,7 +14,7 @@ export default function GoalFormDialog() {
   const confirm = useConfirm();
 
   const onSubmit = async (data) => {
-    const ok = await confirm({ title: 'Create goal?', description: `Create "${data.name}" with target NPR ${data.target_amount}?`, confirmLabel: 'Create' });
+    const ok = await confirm({ title: 'Create goal?', description: `Create "${data.name}" with target ${formatCurrency(data.target_amount, undefined, false)}?`, confirmLabel: 'Create' });
     if (!ok) return;
     const result = await create(data);
     if (toastAsyncResult(result, { success: 'Goal created', error: 'Failed to create goal' })) {

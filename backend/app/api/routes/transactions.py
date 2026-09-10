@@ -6,12 +6,14 @@ from app.core.database import get_db
 from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.transaction import (
+    AnomalyCheckRequest,
     BulkDeleteRequest,
     CategorySuggestRequest,
     TransactionCreate,
     TransactionUpdate,
 )
 from app.services import transaction_service
+from app.services.anomaly_service import acknowledge_anomaly, detect_anomaly
 from app.services.categorizer_service import suggest_category_nb
 from app.services.import_service import import_transactions_csv
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
@@ -74,6 +76,9 @@ def export_transactions(
     date_from: date | None = None,
     date_to: date | None = None,
     search: str | None = None,
+    account_id: str | None = None,
+    amount_min: float | None = None,
+    amount_max: float | None = None,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -83,6 +88,9 @@ def export_transactions(
         "date_from": date_from,
         "date_to": date_to,
         "search": search,
+        "account_id": account_id,
+        "amount_min": amount_min,
+        "amount_max": amount_max,
     }
     csv_data = transaction_service.export_csv(user.id, db, params)
     return PlainTextResponse(
@@ -182,3 +190,38 @@ def suggest_category(
     if not result:
         return {"category": None, "confidence": 0, "is_starter": True}
     return result
+
+
+@router.post("/check-anomaly")
+def check_anomaly(
+    data: AnomalyCheckRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return detect_anomaly(
+        user.id,
+        data.category,
+        data.amount,
+        db,
+        tx_type=data.type,
+    )
+
+
+@router.post("/{transaction_id}/acknowledge-anomaly")
+def acknowledge_transaction_anomaly(
+    transaction_id: UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    t = (
+        db.query(Transaction)
+        .filter(
+            Transaction.id == transaction_id,
+            Transaction.user_id == user.id,
+            Transaction.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not t:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    return acknowledge_anomaly(t, db)

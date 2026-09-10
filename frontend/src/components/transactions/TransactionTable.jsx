@@ -14,6 +14,7 @@ export default function TransactionTable({
   onEdit,
   onDelete,
   onDuplicate,
+  onAcknowledgeAnomaly,
   showSelection = false,
   className,
   searchQuery = '',
@@ -48,7 +49,9 @@ export default function TransactionTable({
             <TableHead>Description</TableHead>
             <TableHead>Type</TableHead>
             <TableHead className="text-right">Amount</TableHead>
-            {(onEdit || onDelete || onDuplicate) && <TableHead className="w-32 text-right">Actions</TableHead>}
+            {(onEdit || onDelete || onDuplicate || onAcknowledgeAnomaly) && (
+              <TableHead className="w-40 text-right">Actions</TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -61,7 +64,8 @@ export default function TransactionTable({
               onEdit={onEdit}
               onDelete={onDelete}
               onDuplicate={onDuplicate}
-              showActions={Boolean(onEdit || onDelete || onDuplicate)}
+              onAcknowledgeAnomaly={onAcknowledgeAnomaly}
+              showActions={Boolean(onEdit || onDelete || onDuplicate || onAcknowledgeAnomaly)}
               searchQuery={searchQuery}
               relativeAccountId={relativeAccountId}
             />

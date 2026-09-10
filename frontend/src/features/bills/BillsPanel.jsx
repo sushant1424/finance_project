@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pencil, Plus, RefreshCw, Trash2, Wallet } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,21 +10,21 @@ import CategoryIcon from '@/components/transactions/CategoryIcon';
 import CurrencyDisplay from '@/components/common/CurrencyDisplay';
 import Pagination from '@/components/common/Pagination';
 import { useConfirm } from '@/components/common/ConfirmProvider';
+import { useHasTransactions } from '@/hooks/useHasTransactions';
 import recurringBillApi from '@/api/recurringBillApi';
 import { FREQUENCY_LABELS } from '@/constants/recurring';
+import { ROUTES } from '@/constants/routes';
 import { formatDate } from '@/utils/formatDate';
-import BillSuggestions from '@/features/bills/BillSuggestions';
 import RecurringBillForm from '@/features/bills/RecurringBillForm';
 
 const PAGE_SIZE = 8;
 
-/** Bills list, suggestions, and create/edit dialogs. */
 export default function BillsPanel() {
   const confirm = useConfirm();
+  const { hasTransactions } = useHasTransactions();
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [summary, setSummary] = useState({ total_monthly: 0, count: 0 });
-  const [suggestions, setSuggestions] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
@@ -44,22 +45,9 @@ export default function BillsPanel() {
     }
   }, [page]);
 
-  const loadSuggestions = useCallback(async () => {
-    try {
-      const data = await recurringBillApi.suggestions();
-      setSuggestions(Array.isArray(data) ? data : []);
-    } catch {
-      setSuggestions([]);
-    }
-  }, []);
-
   useEffect(() => {
     loadBills();
   }, [loadBills]);
-
-  useEffect(() => {
-    loadSuggestions();
-  }, [loadSuggestions]);
 
   const handleCreate = async (data) => {
     setSaving(true);
@@ -69,7 +57,6 @@ export default function BillsPanel() {
       setFormOpen(false);
       setPage(1);
       await loadBills();
-      await loadSuggestions();
     } catch {
       toast.error('Failed to add bill');
     } finally {
@@ -103,7 +90,6 @@ export default function BillsPanel() {
       await recurringBillApi.remove(bill.id);
       toast.success('Bill removed');
       await loadBills();
-      await loadSuggestions();
     } catch {
       toast.error('Failed to remove bill');
     }
@@ -116,23 +102,6 @@ export default function BillsPanel() {
       await loadBills();
     } catch {
       toast.error('Failed to record payment');
-    }
-  };
-
-  const handleAdoptSuggestion = async (s) => {
-    try {
-      await recurringBillApi.create({
-        description: s.description,
-        type: s.type,
-        category: s.category,
-        amount: s.amount,
-        frequency: s.frequency ?? 'monthly',
-      });
-      toast.success('Bill added from suggestion');
-      await loadBills();
-      await loadSuggestions();
-    } catch {
-      toast.error('Failed to add bill');
     }
   };
 
@@ -168,8 +137,6 @@ export default function BillsPanel() {
         </Button>
       </div>
 
-      <BillSuggestions suggestions={suggestions} onAdopt={handleAdoptSuggestion} />
-
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Your recurring bills</CardTitle>
@@ -183,16 +150,31 @@ export default function BillsPanel() {
               <div className="rounded-full bg-surface-2 p-3 text-muted">
                 <RefreshCw className="h-5 w-5" />
               </div>
-              <p className="mt-3 text-sm text-muted">
-                {suggestions.length
-                  ? 'No bills yet. Adopt a suggestion above or add one.'
-                  : 'No bills yet. Add one to track recurring payments.'}
-              </p>
+              {hasTransactions === false ? (
+                <>
+                  <p className="mt-3 text-sm font-medium text-foreground">
+                    Add your first transaction to get started
+                  </p>
+                  <p className="mt-1 max-w-sm text-sm text-muted">
+                    Once you have spending history, you can track recurring bills here.
+                  </p>
+                  <Button asChild variant="outline" size="sm" className="mt-4">
+                    <Link to={ROUTES.TRANSACTIONS}>Add transaction</Link>
+                  </Button>
+                </>
+              ) : (
+                <p className="mt-3 text-sm text-muted">
+                  No bills yet. Add one to track recurring payments.
+                </p>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-border">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                >
                   <div className="flex min-w-0 items-center gap-3">
                     <CategoryIcon categoryId={item.category} size="md" />
                     <div className="min-w-0">
@@ -201,7 +183,10 @@ export default function BillsPanel() {
                         <Badge variant="outline" className="text-[10px]">
                           {FREQUENCY_LABELS[item.frequency] ?? item.frequency}
                         </Badge>
-                        <Badge variant={item.type === 'income' ? 'default' : 'secondary'} className="text-[10px]">
+                        <Badge
+                          variant={item.type === 'income' ? 'default' : 'secondary'}
+                          className="text-[10px]"
+                        >
                           {item.type}
                         </Badge>
                       </div>
@@ -213,16 +198,36 @@ export default function BillsPanel() {
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <span className={`mr-2 font-semibold ${item.type === 'income' ? 'text-success' : 'text-danger'}`}>
+                    <span
+                      className={`mr-2 font-semibold ${
+                        item.type === 'income' ? 'text-success' : 'text-danger'
+                      }`}
+                    >
                       <CurrencyDisplay amount={item.amount} />
                     </span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Record payment" onClick={() => handlePay(item)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Record payment"
+                      onClick={() => handlePay(item)}
+                    >
                       <Wallet className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditBill(item)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setEditBill(item)}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-danger" onClick={() => handleDelete(item)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-danger"
+                      onClick={() => handleDelete(item)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -244,7 +249,11 @@ export default function BillsPanel() {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Add recurring bill</DialogTitle></DialogHeader>
-          <RecurringBillForm onSubmit={handleCreate} onCancel={() => setFormOpen(false)} isSubmitting={saving} />
+          <RecurringBillForm
+            onSubmit={handleCreate}
+            onCancel={() => setFormOpen(false)}
+            isSubmitting={saving}
+          />
         </DialogContent>
       </Dialog>
 

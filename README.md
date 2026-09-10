@@ -1,6 +1,6 @@
-# FinSight — Smart Personal Finance & Budget Tracker
+# FinSight - Smart Personal Finance & Budget Tracker
 
-Track spending, detect anomalies, and hit financial goals with Z-Score anomaly detection, EWMA trend analysis, and budget pace prediction.
+Track spending, detect unusual expenses with Z-score anomaly detection, and hit financial goals with budget pace prediction.
 
 ## Stack
 
@@ -29,7 +29,6 @@ cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
 ```
 
 API docs: http://localhost:8000/docs
@@ -55,16 +54,16 @@ Seed data: `cd backend && source venv/bin/activate && python seed.py`
 
 ## Features
 
-- **Dashboard** — Net balance, income/expense stats, cash flow charts, recent transactions
-- **Transactions** — Full CRUD with filters, sorting, bulk delete, auto anomaly detection
-- **Budgets** — Monthly limits with pace prediction (on track / at risk / exceeded)
-- **Goals** — Savings goals with progress rings and contribution tracking
-- **Reports** — Spending trends with EWMA, category breakdown, PDF export
-- **Anomalies** — Z-Score scatter plot and severity-based alerts
-- **Net Worth** — Manual asset/liability tracking with history chart
+- **Dashboard** - Net balance, income/expense stats, unusual activity, recent transactions
+- **Transactions** - Full CRUD with filters, sorting, bulk delete, live anomaly warnings
+- **Budgets** - Monthly limits with pace prediction (on track / at risk / exceeded)
+- **Goals** - Savings goals with progress rings and contribution tracking
+- **Statistics** - Category breakdown, spending clusters, savings rate, unusual expenses
+- **Notifications** - Budget, goal, bill, balance, and anomaly alerts
 
 ## Algorithms
 
-1. **Z-Score Anomaly Detection** — Flags expenses >2σ from category mean
-2. **EWMA Trend Analysis** — Configurable smoothing for spending trends
-3. **Budget Pace Prediction** — Projects end-of-month spend from current rate
+1. **Z-Score Anomaly Detection** - Flags expenses with |z| >= 2 vs category mean (needs 5+ past expenses; sigma floored to avoid near-zero instability). Income and transfers are skipped.
+2. **Naive Bayes Categorizer** - Suggests categories from description while you type
+3. **K-Means Spending Clusters** - Groups expenses into amount tiers
+4. **Budget Pace Prediction** - Projects end-of-month spend from current rate

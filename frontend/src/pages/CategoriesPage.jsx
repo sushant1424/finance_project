@@ -6,7 +6,7 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Categories"
-        description="Manage built-in and custom spending categories."
+        description="Built-in and custom spending categories."
       />
       <CategoriesSettings />
     </div>

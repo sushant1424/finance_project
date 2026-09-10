@@ -22,6 +22,10 @@ const PRESETS = [
     from: startOfMonth(subMonths(new Date(), 2)),
     to: endOfMonth(new Date()),
   })},
+  { id: 'last6', label: 'Last 6 Months', getRange: () => ({
+    from: startOfMonth(subMonths(new Date(), 5)),
+    to: endOfMonth(new Date()),
+  })},
 ];
 
 export default function DateRangePicker({ value, onChange, className }) {

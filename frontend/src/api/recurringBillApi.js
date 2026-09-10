@@ -6,16 +6,6 @@ export const recurringBillApi = {
     return res.data;
   },
 
-  suggestions: async () => {
-    const res = await client.get('/recurring-bills/suggestions');
-    return res.data;
-  },
-
-  upcoming: async (days = 3) => {
-    const res = await client.get('/recurring-bills/upcoming', { params: { days } });
-    return res.data;
-  },
-
   create: async (data) => {
     const res = await client.post('/recurring-bills', data);
     return res.data;

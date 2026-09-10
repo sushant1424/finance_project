@@ -40,7 +40,10 @@ def create_category(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    c = UserCategory(user_id=user.id, **data.model_dump())
+    payload = data.model_dump()
+    payload["icon"] = (payload.get("icon") or "").strip() or "📁"
+    payload["color"] = (payload.get("color") or "").strip() or "#71717a"
+    c = UserCategory(user_id=user.id, **payload)
     db.add(c)
     db.commit()
     db.refresh(c)
@@ -62,7 +65,15 @@ def update_category(
     if not c:
         raise HTTPException(status_code=404, detail="Category not found")
     for field, value in data.model_dump(exclude_unset=True).items():
+        if field == "icon" and (not value or not str(value).strip()):
+            value = "📁"
+        if field == "color" and (not value or not str(value).strip()):
+            value = "#71717a"
         setattr(c, field, value)
+    if not c.icon:
+        c.icon = "📁"
+    if not c.color:
+        c.color = "#71717a"
     db.commit()
     db.refresh(c)
     return _serialize(c)

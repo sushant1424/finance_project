@@ -3,14 +3,19 @@ import { ArrowDown, ArrowUp, TrendingDown, TrendingUp, Wallet } from 'lucide-rea
 import CurrencyDisplay from '@/components/common/CurrencyDisplay';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { ROUTES } from '@/constants/routes';
+import { pctChange } from '@/utils/pctChange';
 import { cn } from '@/lib/utils';
 
-function pctChange(current, previous) {
-  if (previous == null || previous === 0) return null;
-  return Math.round(((current - previous) / Math.abs(previous)) * 100);
+function sameDaySubtitle(pct) {
+  if (pct == null) return null;
+  if (pct === 0) return 'Same as this time last month';
+  const abs = Math.abs(pct);
+  return pct > 0
+    ? `You've spent ${abs}% more than this time last month`
+    : `You've spent ${abs}% less than this time last month`;
 }
 
-function StatBox({ label, amount, change, badWhenUp, icon: Icon, iconClass, to, subtitle }) {
+function StatBox({ label, amount, change, badWhenUp, icon: Icon, iconClass, to, subtitle, narrative }) {
   const up = change != null && change > 0;
   const down = change != null && change < 0;
   const Arrow = up ? ArrowUp : ArrowDown;
@@ -26,7 +31,19 @@ function StatBox({ label, amount, change, badWhenUp, icon: Icon, iconClass, to, 
         <CurrencyDisplay amount={amount} />
       </p>
       {subtitle && <p className="mt-1.5 text-xs text-muted">{subtitle}</p>}
-      {change != null && (
+      {narrative && (
+        <p
+          className={cn(
+            'mt-1.5 text-xs leading-snug',
+            badWhenUp
+              ? (change != null && change > 0 ? 'text-danger' : 'text-success')
+              : 'text-muted',
+          )}
+        >
+          {narrative}
+        </p>
+      )}
+      {change != null && !narrative && (
         <p
           className={cn(
             'mt-1.5 inline-flex items-center gap-0.5 text-xs font-medium',
@@ -61,6 +78,9 @@ export default function DashboardStats() {
   }
 
   const d = dashboard ?? {};
+  const sameDayPct = d.expenses_vs_same_day_pct != null
+    ? Math.round(d.expenses_vs_same_day_pct)
+    : null;
 
   return (
     <div className="grid gap-4 sm:grid-cols-3">
@@ -77,15 +97,17 @@ export default function DashboardStats() {
         amount={d.total_income}
         change={pctChange(d.total_income, d.prev_income)}
         icon={TrendingUp}
-        iconClass="text-success"
+        iconClass={d.total_income > 0 ? 'text-success' : 'text-muted'}
+        subtitle={!(d.total_income > 0) ? 'No income this month' : undefined}
       />
       <StatBox
         label="Expenses"
         amount={d.total_expenses}
-        change={pctChange(d.total_expenses, d.prev_expenses)}
+        change={sameDayPct}
         badWhenUp
         icon={TrendingDown}
         iconClass="text-danger"
+        narrative={sameDaySubtitle(sameDayPct)}
       />
     </div>
   );

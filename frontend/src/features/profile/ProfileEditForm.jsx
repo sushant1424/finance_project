@@ -54,7 +54,11 @@ export default function ProfileEditForm() {
             <Select defaultValue={user?.currency ?? 'NPR'} onValueChange={(v) => setValue('currency', v)}>
               <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {CURRENCIES.map((c) => <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>)}
+                {CURRENCIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.symbol} · {c.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -4,6 +4,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.user import User
 from app.services import analytics_service
+from app.services.anomaly_service import get_anomalies
 from app.services.clustering_service import get_spending_clusters
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -49,9 +50,35 @@ def savings_rate(user: User = Depends(get_current_user), db: Session = Depends(g
     return analytics_service.get_savings_rate(user.id, db)
 
 
+@router.get("/monthly-recap")
+def monthly_recap(
+    month: int | None = Query(None, ge=1, le=12),
+    year: int | None = Query(None, ge=2000),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    recap = analytics_service.get_monthly_recap(user.id, db, month=month, year=year)
+    return recap or {}
+
+
 @router.get("/spending-clusters")
 def spending_clusters(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     return get_spending_clusters(user.id, db)
+
+
+@router.get("/anomalies")
+def anomalies(
+    period: str = Query("this_month", pattern="^(this_month|last_month|last_3_months)$"),
+    include_acknowledged: bool = Query(False),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return get_anomalies(
+        user.id,
+        db,
+        period=period,
+        include_acknowledged=include_acknowledged,
+    )

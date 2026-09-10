@@ -6,18 +6,22 @@ import EmptyState from '@/components/common/EmptyState';
 import SkeletonCard from '@/components/common/SkeletonCard';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useBudgets } from '@/hooks/useBudgets';
+import { useHasTransactions } from '@/hooks/useHasTransactions';
 import { toastAsyncResult } from '@/utils/toastAsyncResult';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ROUTES } from '@/constants/routes';
 
 export default function BudgetCardsGrid() {
   const { items, loading, month, year, create, update, remove, fetch } = useBudgets();
+  const { hasTransactions } = useHasTransactions();
   const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [editBudget, setEditBudget] = useState(null);
 
   const handleCreate = async (data) => {
-    const ok = await confirm({ title: 'Create budget?', description: `Set ${data.category} limit to NPR ${data.monthly_limit}?`, confirmLabel: 'Create' });
+    const ok = await confirm({ title: 'Create budget?', description: `Set ${data.category} limit to ${formatCurrency(data.monthly_limit, undefined, false)}?`, confirmLabel: 'Create' });
     if (!ok) return;
     const r = await create(data);
     if (toastAsyncResult(r, { success: 'Budget created', error: 'Failed to create budget' })) {
@@ -60,7 +64,21 @@ export default function BudgetCardsGrid() {
         </Dialog>
       </div>
       {!items.length ? (
-        <EmptyState title="No budgets yet" description="Set limits for your spending categories." actionLabel="Create budget" onAction={() => setOpen(true)} />
+        hasTransactions === false ? (
+          <EmptyState
+            title="Add your first transaction to get started"
+            description="Budgets work best once you have some spending history to set limits against."
+            actionLabel="Add transaction"
+            to={ROUTES.TRANSACTIONS}
+          />
+        ) : (
+          <EmptyState
+            title="No budgets yet"
+            description="Set limits for your spending categories."
+            actionLabel="Create budget"
+            onAction={() => setOpen(true)}
+          />
+        )
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((b) => (

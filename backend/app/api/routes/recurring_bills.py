@@ -35,24 +35,6 @@ def list_recurring_bills(
     return recurring_bill_service.list_bills(user.id, db, page, limit, type)
 
 
-@router.get("/suggestions")
-def bill_suggestions(
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    return recurring_bill_service.get_suggestions(user.id, db)
-
-
-@router.get("/upcoming")
-def upcoming_due(
-    days: int = Query(3, ge=1, le=14),
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    from app.services.due_reminder_service import get_upcoming_due
-    return get_upcoming_due(user.id, db, days)
-
-
 @router.post("")
 def create_recurring_bill(
     data: RecurringBillCreate,

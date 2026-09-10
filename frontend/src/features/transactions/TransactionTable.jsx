@@ -7,14 +7,18 @@ import TransactionEditDialog from '@/features/transactions/TransactionEditDialog
 import Pagination from '@/components/common/Pagination';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import transactionApi from '@/api/transactionApi';
 import { toastAsyncResult } from '@/utils/toastAsyncResult';
 import { showDeleteToast } from '@/utils/deleteToast';
+import { downloadCsv } from '@/utils/downloadCsv';
 
 export default function TransactionTable() {
   const {
     items, loading, total, filters, setFilters, selectedIds,
     toggleSelect, selectAll, clearSelection, remove, bulkDelete, exportCsv, fetch, create,
   } = useTransactions();
+  const { fetchDashboard } = useAnalytics(false);
   const confirm = useConfirm();
   const [editTx, setEditTx] = useState(null);
 
@@ -49,6 +53,17 @@ export default function TransactionTable() {
     }
   };
 
+  const handleAcknowledgeAnomaly = async (tx) => {
+    try {
+      await transactionApi.acknowledgeAnomaly(tx.id);
+      toast.success('Marked as expected');
+      fetch();
+      fetchDashboard();
+    } catch {
+      toast.error('Could not update');
+    }
+  };
+
   const handleDuplicate = async (tx) => {
     const ok = await confirm({
       title: 'Duplicate transaction?',
@@ -73,7 +88,11 @@ export default function TransactionTable() {
   };
 
   const handleExport = async (format) => {
-    const ok = await confirm({ title: `Export ${format.toUpperCase()}?`, description: 'Download all filtered transactions.', confirmLabel: 'Export' });
+    const ok = await confirm({
+      title: `Export ${format.toUpperCase()}?`,
+      description: 'Download filtered transactions (date, description, category, type, amount, account).',
+      confirmLabel: 'Export',
+    });
     if (!ok) return;
     try {
       const blob = await exportCsv();
@@ -85,12 +104,7 @@ export default function TransactionTable() {
         XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
         XLSX.writeFile(wb, 'transactions.xlsx');
       } else {
-        const url = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'transactions.csv';
-        a.click();
-        URL.revokeObjectURL(url);
+        downloadCsv('transactions.csv', text);
       }
       toast.success(`${format.toUpperCase()} exported`);
     } catch {
@@ -123,6 +137,7 @@ export default function TransactionTable() {
         onEdit={setEditTx}
         onDelete={handleDelete}
         onDuplicate={handleDuplicate}
+        onAcknowledgeAnomaly={handleAcknowledgeAnomaly}
         showSelection
         searchQuery={filters.search || ''}
       />

@@ -32,6 +32,23 @@ export const analyticsApi = {
     const res = await client.get("/analytics/spending-clusters");
     return res.data;
   },
+
+  monthlyRecap: async (month, year) => {
+    const res = await client.get("/analytics/monthly-recap", {
+      params: {
+        ...(month != null ? { month } : {}),
+        ...(year != null ? { year } : {}),
+      },
+    });
+    return res.data;
+  },
+
+  anomalies: async (period = "this_month", includeAcknowledged = false) => {
+    const res = await client.get("/analytics/anomalies", {
+      params: { period, include_acknowledged: includeAcknowledged },
+    });
+    return res.data;
+  },
 };
 
 export default analyticsApi;

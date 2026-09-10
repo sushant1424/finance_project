@@ -106,7 +106,7 @@ export default function App() {
           {/* Legacy redirects */}
           <Route path={ROUTES.INSIGHTS} element={<Navigate to={ROUTES.STATISTICS_OVERVIEW} replace />} />
           <Route path={ROUTES.REPORTS} element={<Navigate to={ROUTES.STATISTICS_OVERVIEW} replace />} />
-          <Route path={ROUTES.ANOMALIES} element={<Navigate to={ROUTES.STATISTICS_OVERVIEW} replace />} />
+          <Route path={ROUTES.ANOMALIES} element={<Navigate to={ROUTES.STATISTICS_SPENDING} replace />} />
           <Route path={ROUTES.NET_WORTH} element={<Navigate to={ROUTES.DASHBOARD} replace />} />
           <Route path={ROUTES.RECURRING} element={<Navigate to={ROUTES.BILLS} replace />} />
           <Route path={ROUTES.PROFILE} element={<Navigate to={ROUTES.SETTINGS} replace />} />

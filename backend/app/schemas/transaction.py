@@ -66,3 +66,9 @@ class BulkDeleteRequest(BaseModel):
 class CategorySuggestRequest(BaseModel):
     description: str
     type: str = "expense"
+
+
+class AnomalyCheckRequest(BaseModel):
+    category: str
+    amount: float = Field(gt=0)
+    type: str = "expense"

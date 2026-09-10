@@ -27,10 +27,7 @@ export const profileSchema = z.object({
   currency: z.enum(['NPR', 'USD', 'EUR', 'INR', 'GBP']).optional(),
   date_format: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']).optional(),
   month_start_day: z.number().min(1).max(28).optional(),
-  compact_mode: z.boolean().optional(),
   show_cents: z.boolean().optional(),
-  chart_animation: z.boolean().optional(),
-  first_day_of_week: z.enum(['sunday', 'monday']).optional(),
 });
 
 export const changePasswordSchema = z

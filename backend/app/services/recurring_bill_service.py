@@ -1,6 +1,5 @@
-"""CRUD and suggestions for recurring bills."""
+"""CRUD for recurring bills."""
 
-from collections import defaultdict
 from datetime import date
 from uuid import UUID
 
@@ -184,52 +183,3 @@ def upsert_from_transaction(user_id, data: dict, db: Session) -> None:
             notes=data.get("notes"),
         ))
     db.commit()
-
-
-def get_suggestions(user_id, db: Session) -> list:
-    """Detect recurring patterns from transactions not yet saved as bills."""
-    existing_desc = {
-        b.description.lower()
-        for b in db.query(RecurringBill)
-        .filter(RecurringBill.user_id == user_id, RecurringBill.is_active.is_(True))
-        .all()
-    }
-
-    txs = (
-        db.query(Transaction)
-        .filter(Transaction.user_id == user_id)
-        .order_by(Transaction.date.desc())
-        .all()
-    )
-
-    groups = defaultdict(list)
-    for t in txs:
-        groups[t.description.lower().strip()].append(t)
-
-    suggestions = []
-    for desc_key, items in groups.items():
-        if desc_key in existing_desc:
-            continue
-        months = {(t.date.year, t.date.month) for t in items}
-        if len(months) < 2:
-            continue
-
-        amounts = [float(t.amount) for t in items]
-        latest = max(items, key=lambda t: t.date)
-        months_count = max(len(months), 1)
-        avg = round(sum(amounts) / len(amounts), 2)
-
-        from app.services.recurring_service import _detect_frequency
-
-        suggestions.append({
-            "description": latest.description,
-            "type": latest.type,
-            "category": latest.category,
-            "amount": avg,
-            "frequency": _detect_frequency(months_count, len(items)),
-            "last_paid": latest.date.isoformat(),
-            "occurrences": len(items),
-        })
-
-    suggestions.sort(key=lambda x: x["amount"], reverse=True)
-    return suggestions[:10]

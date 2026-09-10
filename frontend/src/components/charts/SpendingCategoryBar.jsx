@@ -5,8 +5,11 @@ import {
   AXIS_PROPS, BAR_RADIUS, CHART_ANIMATION, CHART_COLORS, CHART_MARGIN,
   DEFAULT_CHART_HEIGHT, GRID_PROPS, TOOLTIP_PROPS,
 } from '@/constants/chartConfig';
-import { getCategoryById } from '@/constants/categories';
+import { useResolveCategory } from '@/hooks/useResolveCategory';
 import CurrencyDisplay from '@/components/common/CurrencyDisplay';
+
+/** When one category is this dominant, bars for the rest become unreadable. */
+const DOMINANCE_PCT = 70;
 
 function BarTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -21,7 +24,39 @@ function BarTooltip({ active, payload }) {
   );
 }
 
+function CategoryList({ chartData }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted">
+        One category dominates this period — showing a list so smaller categories stay visible.
+      </p>
+      <div className="space-y-2">
+        {chartData.map((c) => (
+          <div
+            key={c.category}
+            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-2/40 px-3 py-2 text-sm"
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: c.fill }}
+              />
+              <span className="truncate font-medium text-foreground">{c.label}</span>
+            </div>
+            <div className="flex shrink-0 items-center gap-3 tabular-nums">
+              <CurrencyDisplay amount={c.amount} />
+              <span className="w-12 text-right text-muted">{c.percentage}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SpendingCategoryBar({ data = [], height = DEFAULT_CHART_HEIGHT, className }) {
+  const resolve = useResolveCategory();
+
   if (!data.length) {
     return (
       <div className={className} style={{ height }}>
@@ -32,11 +67,23 @@ export default function SpendingCategoryBar({ data = [], height = DEFAULT_CHART_
 
   const chartData = [...data]
     .sort((a, b) => b.amount - a.amount)
-    .map((d) => ({
-      ...d,
-      label: getCategoryById(d.category)?.label ?? d.category,
-      fill: getCategoryById(d.category)?.color ?? CHART_COLORS.muted,
-    }));
+    .map((d) => {
+      const meta = resolve(d.category);
+      return {
+        ...d,
+        label: meta.label,
+        fill: meta.color || CHART_COLORS.muted,
+      };
+    });
+
+  const topPct = chartData[0]?.percentage ?? 0;
+  if (topPct >= DOMINANCE_PCT && chartData.length > 1) {
+    return (
+      <div className={className} style={{ minHeight: height }}>
+        <CategoryList chartData={chartData} />
+      </div>
+    );
+  }
 
   return (
     <div className={className} style={{ height, minWidth: 0 }}>

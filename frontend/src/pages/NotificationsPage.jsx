@@ -62,7 +62,7 @@ export default function NotificationsPage() {
         <Card>
           <CardContent className="flex flex-col items-center py-12 text-center text-muted">
             <Bell className="mb-2 h-8 w-8 opacity-40" />
-            <p className="text-sm">You&apos;re all caught up — no alerts right now.</p>
+            <p className="text-sm">You&apos;re all caught up. No alerts right now.</p>
           </CardContent>
         </Card>
       ) : (

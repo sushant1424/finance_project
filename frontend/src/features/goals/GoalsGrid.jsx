@@ -6,13 +6,17 @@ import SkeletonCard from '@/components/common/SkeletonCard';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useGoals } from '@/hooks/useGoals';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useHasTransactions } from '@/hooks/useHasTransactions';
 import { toastAsyncResult } from '@/utils/toastAsyncResult';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ContributeForm, ConvertForm, WithdrawForm } from '@/features/goals/GoalActionForms';
+import { ROUTES } from '@/constants/routes';
 
 export default function GoalsGrid() {
   const { items, loading, update, remove, contribute, complete, withdraw, convert, fetch } = useGoals();
   const { accounts, fetch: refreshAccounts } = useAccounts();
+  const { hasTransactions } = useHasTransactions();
   const confirm = useConfirm();
   const [editGoal, setEditGoal] = useState(null);
   const [contributeGoal, setContributeGoal] = useState(null);
@@ -42,7 +46,7 @@ export default function GoalsGrid() {
   const handleContribute = async (data) => {
     const ok = await confirm({
       title: 'Add contribution?',
-      description: `Move NPR ${data.amount} from your account into "${contributeGoal.name}"?`,
+      description: `Move ${formatCurrency(data.amount, undefined, false)} from your account into "${contributeGoal.name}"?`,
       confirmLabel: 'Add',
     });
     if (!ok) return;
@@ -105,7 +109,22 @@ export default function GoalsGrid() {
   }
 
   if (!items.length) {
-    return <EmptyState title="No goals yet" description="Create a savings goal to start tracking progress." />;
+    if (hasTransactions === false) {
+      return (
+        <EmptyState
+          title="Add your first transaction to get started"
+          description="Log income and expenses first, then create a savings goal to track progress."
+          actionLabel="Add transaction"
+          to={ROUTES.TRANSACTIONS}
+        />
+      );
+    }
+    return (
+      <EmptyState
+        title="No goals yet"
+        description="Create a savings goal to start tracking progress."
+      />
+    );
   }
 
   const active = items.filter(

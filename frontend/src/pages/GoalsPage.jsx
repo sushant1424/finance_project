@@ -6,6 +6,7 @@ import GoalFormDialog from '@/features/goals/GoalFormDialog';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useGoals } from '@/hooks/useGoals';
 import { Button } from '@/components/ui/button';
+import { downloadCsv, rowsToCsv } from '@/utils/downloadCsv';
 
 export default function GoalsPage() {
   const { items } = useGoals();
@@ -24,13 +25,7 @@ export default function GoalsPage() {
       const status = g.current_amount >= g.target_amount ? 'Completed' : 'In Progress';
       return [g.name, g.target_amount, g.current_amount, pct, g.target_date ?? '', status];
     });
-    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'goals.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsv('goals.csv', rowsToCsv(headers, rows));
     toast.success('Goals CSV downloaded');
   };
 

@@ -5,6 +5,7 @@ import TransactionForm from '@/components/transactions/TransactionForm';
 import { useConfirm } from '@/components/common/ConfirmProvider';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toastAsyncResult } from '@/utils/toastAsyncResult';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
@@ -24,7 +25,7 @@ export default function AddTransactionDialog({
   const onSubmit = async (data) => {
     const ok = await confirm({
       title: 'Add transaction?',
-      description: `Add ${data.type} of NPR ${data.amount} for "${data.description}"?`,
+      description: `Add ${data.type} of ${formatCurrency(data.amount, undefined, false)} for "${data.description}"?`,
       confirmLabel: 'Add',
     });
     if (!ok) return;

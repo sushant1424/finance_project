@@ -1,21 +1,18 @@
 import { Card, CardContent } from '@/components/ui/card';
 import CurrencyDisplay from '@/components/common/CurrencyDisplay';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { getCategoryById } from '@/constants/categories';
+import { useResolveCategory } from '@/hooks/useResolveCategory';
+import { pctChange } from '@/utils/pctChange';
 import { Flame, TrendingDown, TrendingUp } from 'lucide-react';
-
-function pctChange(current, previous) {
-  if (!previous) return null;
-  return Math.round(((current - previous) / Math.abs(previous)) * 100);
-}
 
 export default function MonthOverview() {
   const { dashboard } = useAnalytics(true);
+  const resolve = useResolveCategory();
   const d = dashboard ?? {};
 
   const incomeChg = pctChange(d.total_income, d.prev_income);
   const expenseChg = pctChange(d.total_expenses, d.prev_expenses);
-  const topCat = d.top_category ? getCategoryById(d.top_category)?.label ?? d.top_category : null;
+  const topCat = d.top_category ? resolve(d.top_category).label : null;
   const hasData = d.total_income || d.total_expenses || d.prev_income || d.prev_expenses;
 
   if (!hasData) return null;

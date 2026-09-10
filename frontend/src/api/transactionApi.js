@@ -39,13 +39,18 @@ export const transactionApi = {
     return res.data;
   },
 
-  recurring: async () => {
-    const res = await client.get('/transactions/recurring');
+  suggestCategory: async (description, type = 'expense') => {
+    const res = await client.post('/transactions/suggest-category', { description, type });
     return res.data;
   },
 
-  suggestCategory: async (description, type = 'expense') => {
-    const res = await client.post('/transactions/suggest-category', { description, type });
+  checkAnomaly: async ({ category, amount, type = 'expense' }) => {
+    const res = await client.post('/transactions/check-anomaly', { category, amount, type });
+    return res.data;
+  },
+
+  acknowledgeAnomaly: async (id) => {
+    const res = await client.post(`/transactions/${id}/acknowledge-anomaly`);
     return res.data;
   },
 };

@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
-import { Bell, PiggyBank, RefreshCw, Target } from 'lucide-react';
+import { AlertTriangle, Bell, PiggyBank, RefreshCw, Target, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TYPE_META = {
   budget: { icon: PiggyBank, label: 'Budget' },
   goal: { icon: Target, label: 'Goal' },
   bill: { icon: RefreshCw, label: 'Bill' },
+  balance: { icon: Wallet, label: 'Balance' },
+  anomaly: { icon: AlertTriangle, label: 'Unusual' },
 };
 
 const SEVERITY_CLASS = {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FolderOpen, Pencil, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import EmptyState from '@/components/common/EmptyState';
+import CategoryIcon from '@/components/transactions/CategoryIcon';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -53,45 +54,76 @@ export default function CategoriesSettings() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted">Add your own categories for transactions.</p>
-        <Button size="sm" onClick={() => setOpen(true)}>
-          <Plus className="h-4 w-4" />Add
-        </Button>
-      </div>
-
-      {loading ? (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {[1, 2].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-surface-2" />)}
+    <div className="space-y-6">
+      {/* Built-in categories (read-only reference) */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-sm font-medium text-foreground">Built-in categories</h2>
+          <p className="text-xs text-muted">
+            Included by default. Check these before adding a custom duplicate.
+          </p>
         </div>
-      ) : !custom.length ? (
-        <EmptyState
-          icon={FolderOpen}
-          title="No custom categories"
-          description="Create categories that match how you spend."
-          actionLabel="Add category"
-          onAction={() => setOpen(true)}
-        />
-      ) : (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {custom.map((cat) => (
-            <Card key={cat.id} className="flex items-center gap-3 px-4 py-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-base"
-                style={{ backgroundColor: `${cat.color}25` }}>{cat.icon}</div>
-              <span className="flex-1 truncate text-sm font-medium">{cat.name}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditCat(cat)}>
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-danger" onClick={() => handleDelete(cat)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </Card>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
+            <div
+              key={cat.id}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-surface-1 px-2.5 py-1 text-xs"
+            >
+              <CategoryIcon categoryId={cat.id} size="sm" showBackground={false} />
+              <span className="font-medium text-foreground">{cat.label}</span>
+            </div>
           ))}
         </div>
-      )}
+      </section>
 
-      <p className="text-xs text-muted">{CATEGORIES.length} built-in categories included.</p>
+      {/* Custom categories */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-medium text-foreground">Custom categories</h2>
+            <p className="text-xs text-muted">Add your own for transactions.</p>
+          </div>
+          <Button size="sm" onClick={() => setOpen(true)}>
+            <Plus className="h-4 w-4" />Add
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-surface-2" />
+            ))}
+          </div>
+        ) : !custom.length ? (
+          <EmptyState
+            icon={FolderOpen}
+            title="No custom categories"
+            description="Create categories that match how you spend."
+            actionLabel="Add category"
+            onAction={() => setOpen(true)}
+          />
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {custom.map((cat) => (
+              <Card key={cat.id} className="flex items-center gap-3 px-4 py-3">
+                <CategoryIcon categoryId={cat.id} size="md" />
+                <span className="flex-1 truncate text-sm font-medium">{cat.name}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditCat(cat)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-danger"
+                  onClick={() => handleDelete(cat)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -104,7 +136,11 @@ export default function CategoriesSettings() {
         <Dialog open onOpenChange={(v) => !v && setEditCat(null)}>
           <DialogContent>
             <DialogHeader><DialogTitle>Edit category</DialogTitle></DialogHeader>
-            <CategoryForm defaultValues={editCat} onSubmit={handleUpdate} onCancel={() => setEditCat(null)} />
+            <CategoryForm
+              defaultValues={editCat}
+              onSubmit={handleUpdate}
+              onCancel={() => setEditCat(null)}
+            />
           </DialogContent>
         </Dialog>
       )}

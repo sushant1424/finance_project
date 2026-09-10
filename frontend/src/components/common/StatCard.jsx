@@ -10,6 +10,7 @@ export default function StatCard({
   trendValue,
   trendLabel,
   valueClassName,
+  iconClassName,
   className,
   children,
   to,
@@ -32,7 +33,12 @@ export default function StatCard({
           )}
         </div>
         {Icon && (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-primary">
+          <div
+            className={cn(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-primary',
+              iconClassName,
+            )}
+          >
             <Icon className="h-5 w-5" />
           </div>
         )}

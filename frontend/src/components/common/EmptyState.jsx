@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,8 +9,11 @@ export default function EmptyState({
   description,
   actionLabel,
   onAction,
+  to,
   className,
 }) {
+  const showAction = Boolean(actionLabel && (onAction || to));
+
   return (
     <div
       className={cn(
@@ -25,10 +29,16 @@ export default function EmptyState({
       {description && (
         <p className="mt-2 max-w-sm text-sm text-muted">{description}</p>
       )}
-      {actionLabel && onAction && (
-        <Button onClick={onAction} className="mt-6">
-          {actionLabel}
-        </Button>
+      {showAction && (
+        to ? (
+          <Button asChild className="mt-6">
+            <Link to={to}>{actionLabel}</Link>
+          </Button>
+        ) : (
+          <Button onClick={onAction} className="mt-6">
+            {actionLabel}
+          </Button>
+        )
       )}
     </div>
   );

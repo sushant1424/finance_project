@@ -4,7 +4,7 @@ import CurrencyDisplay from '@/components/common/CurrencyDisplay';
 import SkeletonCard from '@/components/common/SkeletonCard';
 import BudgetProgressBar from '@/components/budget/BudgetProgressBar';
 import { useBudgets } from '@/hooks/useBudgets';
-import { Wallet, TrendingDown, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Wallet, TrendingDown, CheckCircle, AlertTriangle, Minus } from 'lucide-react';
 
 export default function BudgetSummaryStats() {
   const { summary, loading } = useBudgets();
@@ -20,6 +20,12 @@ export default function BudgetSummaryStats() {
   if (!summary) return null;
 
   const total = summary.budgets?.length ?? 0;
+  const noBudgets = total === 0;
+  const onTrackIcon = noBudgets
+    ? Minus
+    : summary.over_budget_count > 0
+      ? AlertTriangle
+      : CheckCircle;
 
   return (
     <div className="space-y-4">
@@ -52,8 +58,10 @@ export default function BudgetSummaryStats() {
         <StatCard title="Remaining" value={<CurrencyDisplay amount={summary.remaining} />} icon={Wallet} />
         <StatCard
           title="On track"
-          value={`${summary.on_track_count ?? 0} / ${total}`}
-          icon={summary.over_budget_count > 0 ? AlertTriangle : CheckCircle}
+          value={noBudgets ? '—' : `${summary.on_track_count ?? 0} / ${total}`}
+          icon={onTrackIcon}
+          valueClassName={noBudgets ? 'text-muted' : undefined}
+          iconClassName={noBudgets ? 'text-muted' : undefined}
         />
       </div>
     </div>

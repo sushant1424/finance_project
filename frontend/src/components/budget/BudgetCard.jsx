@@ -5,12 +5,13 @@ import CurrencyDisplay from '@/components/common/CurrencyDisplay';
 import CategoryIcon from '@/components/transactions/CategoryIcon';
 import BudgetPaceIndicator from '@/components/budget/BudgetPaceIndicator';
 import BudgetProgressBar from '@/components/budget/BudgetProgressBar';
-import { getCategoryById } from '@/constants/categories';
+import { useResolveCategory } from '@/hooks/useResolveCategory';
 import { normalizePace } from '@/utils/budgetPace';
 import { cn } from '@/lib/utils';
 
 export default function BudgetCard({ budget, onEdit, onDelete, className }) {
-  const category = getCategoryById(budget.category);
+  const resolve = useResolveCategory();
+  const category = resolve(budget.category);
   const spent = budget.spent ?? budget.amount_spent ?? 0;
   const limit = budget.effective_limit ?? budget.monthly_limit ?? 0;
   const pace = normalizePace(budget.pace);
@@ -21,7 +22,7 @@ export default function BudgetCard({ budget, onEdit, onDelete, className }) {
         <div className="flex items-center gap-3">
           <CategoryIcon categoryId={budget.category} />
           <div>
-            <CardTitle className="text-base">{category?.label ?? budget.category}</CardTitle>
+            <CardTitle className="text-base">{category.label}</CardTitle>
             <p className="text-sm text-muted">
               <CurrencyDisplay amount={spent} /> / <CurrencyDisplay amount={limit} />
             </p>

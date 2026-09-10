@@ -9,7 +9,14 @@ from app.models.transaction import Transaction
 from app.services.analytics_helpers import (
     effective_reference_date,
     sum_by_type,
+    sum_by_type_through_day,
 )
+
+
+def _pct_change(current: float, previous: float) -> float | None:
+    if previous == 0:
+        return None
+    return round(((current - previous) / abs(previous)) * 100, 1)
 
 
 def get_dashboard(user_id, db: Session) -> dict:
@@ -22,6 +29,16 @@ def get_dashboard(user_id, db: Session) -> dict:
     prev_year = today.year if today.month > 1 else today.year - 1
     prev_income = sum_by_type(user_id, "income", prev_month, prev_year, db)
     prev_expenses = sum_by_type(user_id, "expense", prev_month, prev_year, db)
+
+    # Same calendar day last month (MTD vs MTD) — meaningful mid-month context
+    expenses_mtd = sum_by_type_through_day(
+        user_id, "expense", today.month, today.year, today.day, db
+    )
+    expenses_same_day_prev = sum_by_type_through_day(
+        user_id, "expense", prev_month, prev_year, today.day, db
+    )
+    expenses_vs_same_day_pct = _pct_change(expenses_mtd, expenses_same_day_prev)
+
     prev_balance = prev_income - prev_expenses
     balance = income - expenses
     if prev_balance != 0:
@@ -105,6 +122,25 @@ def get_dashboard(user_id, db: Session) -> dict:
             "progress_pct": round(min((current / target) * 100, 100), 0),
         }
 
+    from app.services.anomaly_service import (
+        anomaly_payload_for_tx,
+        build_category_amount_index,
+        get_anomalies,
+    )
+
+    amount_index = build_category_amount_index(user_id, db)
+    month_anomalies = get_anomalies(user_id, db, period="this_month")
+    unusual_preview = [
+        {
+            "id": a["id"],
+            "description": a["description"],
+            "category": a["category"],
+            "amount": a["amount"],
+            "severity": a["severity"],
+        }
+        for a in month_anomalies["items"][:3]
+    ]
+
     return {
         "net_balance": balance,
         "net_worth": total_net_worth,
@@ -113,6 +149,9 @@ def get_dashboard(user_id, db: Session) -> dict:
         "total_expenses": expenses,
         "prev_income": prev_income,
         "prev_expenses": prev_expenses,
+        "expenses_mtd": expenses_mtd,
+        "expenses_same_day_prev": expenses_same_day_prev,
+        "expenses_vs_same_day_pct": expenses_vs_same_day_pct,
         "total_transactions": int(total_transactions or 0),
         "total_income_all": float(total_income_all or 0),
         "total_expenses_all": float(total_expenses_all or 0),
@@ -125,6 +164,10 @@ def get_dashboard(user_id, db: Session) -> dict:
         ],
         "goal_nudge": goal_nudge,
         "daily_burn": daily_burn,
+        "unusual_activity": {
+            "count": month_anomalies["count"],
+            "items": unusual_preview,
+        },
         "recent_transactions": [
             {
                 "id": str(t.id),
@@ -133,6 +176,7 @@ def get_dashboard(user_id, db: Session) -> dict:
                 "description": t.description,
                 "category": t.category,
                 "date": t.date.isoformat(),
+                "anomaly": anomaly_payload_for_tx(t, amount_index),
             }
             for t in recent[:5]
         ],
@@ -210,3 +254,71 @@ def get_savings_rate(user_id, db: Session) -> list:
             "rate": rate,
         })
     return result
+
+
+def get_monthly_recap(user_id, db: Session, month: int | None = None, year: int | None = None) -> dict | None:
+    """Static recap for a completed (or nearly complete) month — reuses existing aggregates."""
+    today = date.today()
+    if month is None or year is None:
+        # Default: previous calendar month (the natural "check your August recap" moment)
+        if today.month == 1:
+            month, year = 12, today.year - 1
+        else:
+            month, year = today.month - 1, today.year
+
+    income = sum_by_type(user_id, "income", month, year, db)
+    expenses = sum_by_type(user_id, "expense", month, year, db)
+    if income == 0 and expenses == 0:
+        return None
+
+    savings = income - expenses
+    rate = round((savings / income) * 100, 1) if income > 0 else None
+
+    top = (
+        db.query(Transaction.category, func.sum(Transaction.amount).label("total"))
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == "expense",
+            Transaction.deleted_at.is_(None),
+            extract("month", Transaction.date) == month,
+            extract("year", Transaction.date) == year,
+        )
+        .group_by(Transaction.category)
+        .order_by(func.sum(Transaction.amount).desc())
+        .first()
+    )
+
+    biggest = (
+        db.query(Transaction)
+        .filter(
+            Transaction.user_id == user_id,
+            Transaction.type == "expense",
+            Transaction.deleted_at.is_(None),
+            extract("month", Transaction.date) == month,
+            extract("year", Transaction.date) == year,
+        )
+        .order_by(Transaction.amount.desc())
+        .first()
+    )
+
+    return {
+        "month": month,
+        "year": year,
+        "label": date(year, month, 1).strftime("%B %Y"),
+        "total_income": income,
+        "total_spent": expenses,
+        "savings": savings,
+        "savings_rate": rate,
+        "top_category": top.category if top else None,
+        "top_category_amount": float(top.total) if top else 0,
+        "biggest_expense": (
+            {
+                "description": biggest.description,
+                "amount": float(biggest.amount),
+                "category": biggest.category,
+                "date": biggest.date.isoformat(),
+            }
+            if biggest
+            else None
+        ),
+    }

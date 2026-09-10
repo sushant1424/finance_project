@@ -1,34 +1,64 @@
 import { useEffect } from "react";
+import toast from "react-hot-toast";
+import { Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import SpendingCategoryBar from "@/components/charts/SpendingCategoryBar";
-import DateRangePicker from "@/components/common/DateRangePicker";
-import { getCategoryById } from "@/constants/categories";
+import CurrencyDisplay from "@/components/common/CurrencyDisplay";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useDateRange } from "@/hooks/useDateRange";
-import { toISODateString } from "@/utils/formatDate";
+import { useResolveCategory } from "@/hooks/useResolveCategory";
+import { useConfirm } from "@/components/common/ConfirmProvider";
 import { DEFAULT_CHART_HEIGHT } from "@/constants/chartConfig";
+import { downloadCsv, rowsToCsv } from "@/utils/downloadCsv";
 
 export default function StatisticsSpending() {
-  const { from, to, setRange, setLastMonths } = useDateRange();
+  const { from, to } = useDateRange();
   const { categories, fetchCategories } = useAnalytics();
-
-  useEffect(() => {
-    if (!from || !to) setLastMonths(3);
-  }, []); // eslint-disable-line
+  const resolve = useResolveCategory();
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (from && to) fetchCategories(from, to);
   }, [from, to]); // eslint-disable-line
 
+  const handleExport = async () => {
+    if (!categories.length) {
+      toast.error("No spending data to export");
+      return;
+    }
+    const ok = await confirm({
+      title: "Export spending report?",
+      description: "Download category totals for the selected period as CSV.",
+      confirmLabel: "Export",
+    });
+    if (!ok) return;
+
+    const sorted = [...categories].sort((a, b) => b.amount - a.amount);
+    const headers = ["Category", "Total Spent", "% of total"];
+    const rows = sorted.map((c) => [
+      resolve(c.category).label,
+      c.amount,
+      c.percentage,
+    ]);
+    const stamp = from && to ? `${from}_to_${to}` : "report";
+    downloadCsv(`spending-by-category-${stamp}.csv`, rowsToCsv(headers, rows));
+    toast.success("Spending report downloaded");
+  };
+
   return (
     <div className="space-y-4">
-      <DateRangePicker
-        value={from && to ? { from: new Date(from), to: new Date(to) } : null}
-        onChange={(range) =>
-          setRange(toISODateString(range.from), toISODateString(range.to))
-        }
-      />
-
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          disabled={!categories.length}
+        >
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
+      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
@@ -50,30 +80,37 @@ export default function StatisticsSpending() {
               </p>
             ) : (
               <div className="space-y-2">
-                {categories.slice(0, 8).map((c) => (
-                  <div
-                    key={c.category}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span className="text-foreground">
-                      {getCategoryById(c.category)?.label ?? c.category.replace("_", " ")}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-2">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${c.percentage}%`,
-                            backgroundColor: getCategoryById(c.category)?.color ?? undefined,
-                          }}
-                        />
+                {[...categories]
+                  .sort((a, b) => b.amount - a.amount)
+                  .slice(0, 8)
+                  .map((c) => {
+                    const meta = resolve(c.category);
+                    return (
+                      <div
+                        key={c.category}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-foreground">{meta.label}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="tabular-nums text-muted">
+                            <CurrencyDisplay amount={c.amount} />
+                          </span>
+                          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-2">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${c.percentage}%`,
+                                backgroundColor: meta.color,
+                              }}
+                            />
+                          </div>
+                          <span className="w-8 text-right text-muted">
+                            {c.percentage}%
+                          </span>
+                        </div>
                       </div>
-                      <span className="w-8 text-right text-muted">
-                        {c.percentage}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
             )}
           </CardContent>

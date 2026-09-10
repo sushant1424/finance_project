@@ -16,9 +16,11 @@ import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "@/constants/categories";
 import { useCategories } from "@/hooks/useCategories";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategorySuggestion } from "@/hooks/useCategorySuggestion";
+import { useAnomalyCheck } from "@/hooks/useAnomalyCheck";
 import { transactionSchema } from "@/schemas/transactionSchema";
 import { FREQUENCIES } from "@/constants/recurring";
 import { toISODateString } from "@/utils/formatDate";
+import { categorySlug } from "@/utils/resolveCategory";
 
 export default function TransactionForm({
   defaultValues,
@@ -64,9 +66,11 @@ export default function TransactionForm({
   const type = watch("type");
   const accountId = watch("account_id");
   const category = watch("category");
+  const amount = watch("amount");
   const toAccountId = watch("to_account_id");
   const descriptionValue = watch("description");
   const suggestion = useCategorySuggestion(descriptionValue, type === "transfer" ? "expense" : type);
+  const anomaly = useAnomalyCheck(amount, category, type);
 
   // Prefer default account once list loads (unless this form is locked to an account)
   useEffect(() => {
@@ -99,8 +103,10 @@ export default function TransactionForm({
 
   const baseCategories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const customForType = custom.map((c) => ({
-    id: c.name.toLowerCase().replace(/\s+/g, "_"),
+    id: categorySlug(c.name),
     label: c.name,
+    icon: c.icon || "📁",
+    color: c.color || "#71717a",
   }));
   const allCategories = [...baseCategories, ...customForType];
 
@@ -134,6 +140,19 @@ export default function TransactionForm({
           <Label htmlFor="amount">Amount</Label>
           <Input id="amount" type="number" step="0.01" {...register("amount")} />
           {errors.amount && <p className="text-xs text-danger">{errors.amount.message}</p>}
+          {anomaly && (
+            <p
+              className={
+                anomaly.severity === "high"
+                  ? "mt-1 rounded-lg border border-warning/40 bg-warning/10 px-2.5 py-1.5 text-xs text-foreground"
+                  : "mt-1 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-muted"
+              }
+              role="status"
+            >
+              <span className="mr-1" aria-hidden>⚠️</span>
+              {anomaly.reason || "This looks unusual for this category. Is that right?"}
+            </p>
+          )}
         </div>
       </div>
 
@@ -148,7 +167,7 @@ export default function TransactionForm({
               onClick={() => setValue("category", suggestion)}
               className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full hover:bg-primary/20 transition-colors capitalize"
             >
-              {suggestion.replace(/_/g, " ")} — tap to use
+              {suggestion.replace(/_/g, " ")} - tap to use
             </button>
           </div>
         )}

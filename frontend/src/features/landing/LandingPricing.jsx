@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 const PLANS = [
   {
     name: 'Free',
-    price: 'NPR 0',
+    price: 'Rs. 0',
     period: 'forever',
     description: 'Everything you need to start tracking your finances.',
     highlighted: false,
@@ -27,7 +27,7 @@ const PLANS = [
   },
   {
     name: 'Pro',
-    price: 'NPR 499',
+    price: 'Rs. 499',
     period: '/month',
     description: 'For people who want deeper insights and unlimited room to grow.',
     highlighted: true,
