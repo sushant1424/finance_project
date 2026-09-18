@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: finance-project-backend
+    env: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    pythonVersion: 3.12.8
+    envVars:
+      - key: CARGO_HOME
+        value: /opt/render/project/src/.cargo
