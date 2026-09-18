@@ -63,7 +63,7 @@ export default function MonthlyRecap() {
       </div>
       <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
         <CalendarDays className="h-3 w-3" />
-        Snapshot of last month — numbers you already track, gathered in one place.
+        Snapshot of last month - numbers you already track, gathered in one place.
       </p>
     </DashboardPanel>
   );
