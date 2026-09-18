@@ -15,6 +15,7 @@ from app.api.routes import (
     recurring_bills,
     transactions,
 )
+from app.core.config import settings
 from app.core.database import Base, engine
 from app.core.migrate import run_migrations
 import app.models  # noqa: F401 — register all models for create_all
@@ -38,7 +39,7 @@ def schedule_database_initialization() -> None:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -8,7 +8,7 @@ export const setStoredToken = (token) => localStorage.setItem(TOKEN_KEY, token);
 export const clearStoredToken = () => localStorage.removeItem(TOKEN_KEY);
 
 const client = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
