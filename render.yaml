@@ -9,3 +9,9 @@ services:
     envVars:
       - key: PORT
         value: "8000"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "https://your-frontend-url.com"
