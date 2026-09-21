@@ -1,13 +1,11 @@
 services:
   - type: web
     name: finance-project-backend
-    env: python
+    env: docker
     plan: free
     rootDir: backend
-    buildCommand: bash build.sh
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    dockerContext: .
+    dockerfilePath: Dockerfile
     envVars:
-      - key: CARGO_HOME
-        value: /opt/render/project/src/.cargo
-      - key: PYO3_USE_ABI3_FORWARD_COMPATIBILITY
-        value: "1"
+      - key: PORT
+        value: "8000"
